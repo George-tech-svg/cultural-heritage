@@ -1,7 +1,7 @@
 export const CURRENT_TERMS_NOTICE = `## 23. Current platform features and controls
 **Platform update: 30 October 2026.**
 
-Visitors start at Log in and may choose Create account or Browse the public library. Public browsing does not require an account; saving personal items, contribution submission and account history require sign-in. Choose your community language during registration. Approved public interface translations display Dholuo with a smaller read-only English meaning beneath; labels without reviewed translations remain English. Administrators edit only within their assigned permissions. English assistance is not a guarantee that every cultural record has a completed translation.
+Visitors start at the public heritage homepage and may search or browse without signing in. Sign in and account creation remain available for personal features. Public browsing does not require an account; saving personal items, contribution submission and account history require sign-in. Choose your community language during registration. Approved public interface translations display Dholuo with a smaller read-only English meaning beneath; labels without reviewed translations remain English. Administrators edit only within their assigned permissions. English assistance is not a guarantee that every cultural record has a completed translation.
 
 Discover and collection feeds display permitted published material, including uploaded versions explicitly released while review continues. A Review in progress label means editorial review is unfinished. Media filters and automatic paging help browse the available collection; reaching the end means no further matching records are currently available. More and less only expand a card description. Explore this item opens the full record, its available attachments, translations, transcripts and related records. Public visibility or an available download does not grant reuse beyond the record's licence and source permissions.
 
@@ -255,6 +255,7 @@ ${CURRENT_PRIVACY_NOTICE}`;
 
 /** Preserve institution-authored policies while keeping displayed and accepted text identical. */
 export function currentLegalContent(key: string, content: string): string {
+  if (key === "terms_content") content = content.replace("Visitors start at Log in and may choose Create account or Browse the public library.", "Visitors start at the public heritage homepage and may search or browse without signing in. Sign in and account creation remain available for personal features.");
   const notice = key === "terms_content" ? CURRENT_TERMS_NOTICE : key === "privacy_content" ? CURRENT_PRIVACY_NOTICE : "";
   if (!notice || /^## \d+\. Current platform features and controls$/m.test(content)) return content;
   return `${content.trim()}\n\n${notice}`;

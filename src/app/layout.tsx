@@ -1,5 +1,6 @@
 ﻿import type { Metadata } from "next";
 import { Toaster } from "sonner";
+import type { Viewport } from "next";
 import { AuthProvider } from "@/components/providers/session-provider";
 import { AppInstallationProvider } from "@/components/pwa/app-installation";
 import { AppUpdatesProvider } from "@/components/pwa/app-updates";
@@ -8,6 +9,9 @@ import { FloatingChatbot } from "@/components/layout/floating-chatbot";
 import Script from "next/script";
 import { WebInterfaceLanguageProvider } from "@/components/shared/web-interface-language";
 import "./globals.css";
+import "./heritage-design.css";
+
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 export const metadata: Metadata = {
   title: APP_NAME,

@@ -45,7 +45,7 @@ async function main() {
     });
     const evaluate = async expression => {
       const result = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true });
-      if (result.exceptionDetails) throw new Error('Form inspection failed');
+      if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description || 'Form inspection failed');
       return result.result.value;
     };
     await send('Runtime.enable');
@@ -72,7 +72,7 @@ async function main() {
     }
     await send('Emulation.setDeviceMetricsOverride', { width: 360, height: 800, deviceScaleFactor: 1, mobile: true });
     await send('Page.navigate', {url:base+'/'});
-    await until(()=>evaluate('location.pathname==="/login" && !!document.querySelector("input[name=password]")'),'fresh startup opens login');
+    await until(()=>evaluate('location.pathname==="/" && !!document.querySelector(".heritage-hero-search")'),'fresh startup opens the public heritage homepage');
     await send('Page.navigate', { url: base + '/login?' + new URLSearchParams({ callbackUrl: approval }) });
     await until(() => evaluate('document.querySelector("h1")?.textContent.includes("Welcome back")&&!!document.querySelector("input[name=password]")'), 'login form');
     assert.equal(await evaluate('document.documentElement.scrollWidth<=innerWidth'), true);
@@ -96,7 +96,7 @@ async function main() {
     await until(() => evaluate(`location.search.includes("example.invalid")&&document.querySelector("h1")?.textContent.includes("Welcome back")&&!!document.querySelector("input[name=password]")&&!!document.querySelector('a[href="/register"]')`), 'unsafe callback login');
     assert.equal(await evaluate('Array.from(document.querySelectorAll("a")).find(e=>e.textContent.includes("Create new account"))?.getAttribute("href")'), '/register');
     await send('Page.navigate',{url:base+'/forgot-password'});
-    await until(()=>evaluate('document.querySelector("h1")?.textContent.includes("Reset password")&&!!document.querySelector("input[name=email]")'),'password recovery screen');
+    await until(()=>evaluate('location.pathname==="/forgot-password"&&document.querySelector("h1")?.textContent.includes("Reset password")&&!!document.querySelector(".auth-form-content form input[name=email]")'),'password recovery screen');
     assert.equal(await evaluate('document.documentElement.scrollWidth<=innerWidth'),true);
     assert.equal(await evaluate(`!!document.querySelector('select,a[href="/login"],a[href="/register"]')`),false);
     assert.doesNotMatch(await evaluate('document.querySelector(".auth-form-content").textContent'),/Delete account|Verify email/);

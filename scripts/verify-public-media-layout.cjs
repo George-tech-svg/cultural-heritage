@@ -8,12 +8,17 @@ const base = process.env.SMOKE_BASE_URL || 'http://127.0.0.1:3100';
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 const layoutOnly = process.argv.includes('--layout-only');
 const playersOnly = process.argv.includes('--players-only');
+const homeOnly = process.argv.includes('--home-only');
+const mobileBundle = process.argv.includes('--mobile-preview');
 const detailsOnly = process.argv.includes('--details-only');
 const report = { mobilePreview: layoutOnly || process.argv.includes('--mobile-preview'), viewports: [], interactions: [], runtimeErrors: [], unexpectedApis: [], liveWrites: 0 };
 const languages = [{ id: 1, code: 'luo', name: 'Luo', nativeName: 'Dholuo' }, { id: 2, code: 'eng', name: 'English', nativeName: 'English' }];
 const modules = ['oral_histories', 'songs', 'folktales'].map(code => ({ code, baseName: code === 'songs' ? 'Traditional Songs' : code === 'folktales' ? 'Folktales' : 'Oral Histories', title: code, href: `/dashboard?module=${code}`, contributionHref: `/contribute/${code}` }));
 const account = { id: 'layout-reader', name: 'Layout reader', email: 'reader@example.invalid', image: null, profileTypes: [], isSuperAdmin: false, isMasterSuperAdmin: false, languageRoles: [] };
 const illustration = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="960" height="600"><rect width="960" height="600" fill="#e0ebdf"/><circle cx="760" cy="130" r="70" fill="#f0c777"/><path d="M0 360Q250 160 500 360T960 260V600H0" fill="#5c8f7c"/><path d="M0 450Q400 340 960 490V600H0" fill="#184f4b"/><text x="50" y="550" fill="white" font-family="Arial" font-size="28">FICTIONAL MEDIA — LAYOUT CHECK</text></svg>');
+let homeFixtureMode = 'normal';
+let homeTranslated = false;
+const homeQueries = [];
 let videoBytes = '', videoPromise, saveCalls = 0, readingCalls = 0, paginateMode = false, pageCalls = 0;
 const items = () => [
   { id: 'mixed', title: 'Wach mar oganda', englishTitle: 'Community voices', summary: 'Fictional layout sample: original media stays together, with the item description and actions beside it.', bodyText: 'meaning: Fictional full meaning.\n\ncounty: Fictional place.\n\nusage: Complete detail marker.', moduleCode: 'oral_histories', moduleName: 'Oral Histories', transcriptCount: 216, isProvisional: true, media: [{ id: 'image', type: 'image', url: base + '/api/media/image/file' }, { id: 'video', type: 'video', url: base + '/api/media/video/file', thumbnailUrl: base + '/api/media/image/file' }, { id: 'audio', type: 'audio', url: base + '/api/media/audio/file' }, { id: 'document', type: 'document', url: base + '/api/media/document/file' }] },
@@ -44,16 +49,20 @@ async function main() {
       if (url.pathname === '/api/v1/bootstrap') report.apiOrigin = url.origin;
       if (url.pathname === '/api/v1/bootstrap') return { apiVersion: 1, app: { name: 'Luo Heritage', tagline: 'Heritage', version: 'audit', icon: '/icons/luo-heritage-512.png', manifest: '/application.webmanifest' }, selectedLanguage: languages[0], languages, modules, routes: {}, contentFilters: [], contentViews: [] };
       if (url.pathname === '/api/v1/library') {
-        if (!videoBytes) { videoPromise ??= evaluate(`new Promise(resolve=>{const c=document.createElement('canvas');c.width=640;c.height=360;const ctx=c.getContext('2d');const paint=()=>{ctx.fillStyle='#164e49';ctx.fillRect(0,0,640,360);ctx.fillStyle='#f1d393';ctx.font='24px Arial';ctx.fillText('FICTIONAL VIDEO — LAYOUT CHECK',40,180);};paint();const stream=c.captureStream(5),r=new MediaRecorder(stream,{mimeType:'video/webm;codecs=vp8'}),chunks=[];r.ondataavailable=e=>chunks.push(e.data);r.onstop=()=>{stream.getTracks().forEach(t=>t.stop());const reader=new FileReader();reader.onload=()=>resolve(reader.result.split(',')[1]);reader.readAsDataURL(new Blob(chunks,{type:'video/webm'}));};r.start();let paints=0;const timer=setInterval(()=>{paint();stream.getVideoTracks()[0].requestFrame?.();if(++paints===12){clearInterval(timer);r.stop();}},100);})`); videoBytes = await videoPromise; }
+        if (homeOnly) homeQueries.push(url.searchParams.get('q') || '');
+        if (homeOnly && homeFixtureMode === 'invalid') return {};
+        if (homeOnly && homeFixtureMode === 'empty') return {title:'Empty',baseName:'Empty',moduleCode:'discover',languageCode:'luo',languageName:'Dholuo',languageId:1,canContribute:false,items:[],limits:{records:12,dictionaryEntries:6}};
+        if (!videoBytes && !homeOnly) { videoPromise ??= evaluate(`new Promise(resolve=>{const c=document.createElement('canvas');c.width=640;c.height=360;const ctx=c.getContext('2d');const paint=()=>{ctx.fillStyle='#164e49';ctx.fillRect(0,0,640,360);ctx.fillStyle='#f1d393';ctx.font='24px Arial';ctx.fillText('FICTIONAL VIDEO — LAYOUT CHECK',40,180);};paint();const stream=c.captureStream(5),r=new MediaRecorder(stream,{mimeType:'video/webm;codecs=vp8'}),chunks=[];r.ondataavailable=e=>chunks.push(e.data);r.onstop=()=>{stream.getTracks().forEach(t=>t.stop());const reader=new FileReader();reader.onload=()=>resolve(reader.result.split(',')[1]);reader.readAsDataURL(new Blob(chunks,{type:'video/webm'}));};r.start();let paints=0;const timer=setInterval(()=>{paint();stream.getVideoTracks()[0].requestFrame?.();if(++paints===12){clearInterval(timer);r.stop();}},100);})`); videoBytes = await videoPromise; }
         const code = url.searchParams.get('module') || 'discover';
         if (paginateMode && url.searchParams.has('records')) pageCalls++;
         return { title: 'Community collection', baseName: 'Community collection', moduleCode: code, languageCode: 'luo', languageName: 'Dholuo', languageId: 1, canContribute: true, items: paginateMode && url.searchParams.has('records') ? [{...items()[1], id:'next-page', title:'Automatically loaded recording'}] : items(), categories: [...modules.map(m => ({ code: m.code, name: m.baseName })), ...Array.from({length: 18}, (_,i) => ({code:'sample_'+i,name:'Fictional category '+(i+1)}))], limits: { records: 12, dictionaryEntries: 6 }, continuation: { records: paginateMode && !url.searchParams.has('records') ? 'mixed' : null, dictionary: null } };
       }
+      if (url.pathname === '/api/auth/session' && homeOnly) return null;
       if (url.pathname === '/api/auth/session') return { user: account, expires: new Date(Date.now() + 3600000).toISOString() };
       if (url.pathname === '/api/v1/account') return account;
       if (url.pathname === '/api/v1/account/conversations') return [];
       if (url.pathname === '/api/languages') return languages;
-      if (url.pathname === '/api/interface-copy') return { catalog: {} };
+      if (url.pathname === '/api/interface-copy') return { catalog: homeTranslated ? {'Discover the collection':{english:'Discover the collection',local:'Community label fixture'}} : {} };
       if (url.pathname === '/api/branding' || url.pathname === '/api/v1/activity') return {};
       if (url.pathname === '/api/app-version') return { version: 'development' };
       if (url.pathname === '/api/v1/reading') { readingCalls++; return reading(url.searchParams.get('id')); }
@@ -74,7 +83,52 @@ async function main() {
       })().catch(error => { if (!closing && !/Invalid InterceptionId/.test(error.message)) report.runtimeErrors.push(error.message); });
     };
     await send('Runtime.enable'); await send('Page.enable'); await send('Fetch.enable', { patterns: [{ urlPattern: '*/api/*' }] });
-    await send('Page.navigate', { url: base + '/application#/dashboard' });
+    await send('Page.navigate', { url: base + (homeOnly ? mobileBundle ? '/application' : '/' : '/application#/dashboard') });
+    if (homeOnly) {
+      await until(`!!document.querySelector('.heritage-home h1')`, 'public heritage entry');
+      await until(`document.querySelectorAll('.heritage-featured-card').length===1`, 'published featured item');
+      for (const [width,height] of [[1440,1000],[1024,900],[768,900],[390,844],[320,700],[844,390]]) {
+        await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<768});
+        await evaluate(`scrollTo(0,0);document.querySelector('.heritage-public-entry')?.scrollTo(0,0)`);await delay(150);
+        const metrics=await evaluate(`(()=>{const h=document.querySelector('.heritage-home'),s=document.querySelector('.heritage-hero-search').getBoundingClientRect();return {width:innerWidth,page:document.documentElement.scrollWidth,home:h.scrollWidth,searchBottom:s.bottom,heading:document.querySelector('.heritage-home h1').textContent,background:getComputedStyle(h).backgroundColor};})()`);
+        assert.ok(metrics.page<=width&&metrics.home<=width,'Homepage has no overflow at '+width);assert.equal(metrics.background,'rgb(248, 245, 237)');
+        for (const [w,h] of [[360,960],[960,960],[1280,360]]) {
+          assert.equal(await evaluate(`(async()=>{const image=document.querySelector('.heritage-card-image img');image.removeAttribute('srcset');image.src='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="#d9b968"/></svg>');await image.decode();const r=image.getBoundingClientRect(),p=image.parentElement.getBoundingClientRect(),label=image.parentElement.querySelector('.heritage-card-category').getBoundingClientRect();return getComputedStyle(image).objectFit==='contain'&&r.width>0&&r.height>0&&r.left>=p.left-1&&r.right<=p.right+1&&r.top>=label.bottom-1&&r.bottom<=p.bottom+1;})()`),true,'Homepage keeps portrait, square and panoramic images fully inside their frame below the category at '+width);
+        }
+        if(width===390||width===320)assert.ok(metrics.searchBottom<height,'Search is visible on the first phone screen');
+        await evaluate(`document.querySelector('button[aria-label="Open heritage navigation"]').click()`);
+        await until(`!!document.querySelector('.heritage-mobile-nav')`, 'navigation opens');
+        assert.equal(await evaluate(`(()=>{const p=document.querySelector('.heritage-mobile-nav'),r=p.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight&&p.querySelector('[data-app-install] button')?.textContent.includes('Install');})()`),true,'Navigation fits and install is available');
+        await evaluate(`document.querySelector('button[aria-label="Close heritage navigation"]').click()`);
+        await until(`!document.querySelector('.heritage-mobile-nav')`, 'navigation closes');
+        if([1440,390,320].includes(width))fs.writeFileSync('docs/system-audit/screenshots/luo-redesign-home-'+(mobileBundle?'mobile':'web')+'-'+width+'.png',Buffer.from((await send('Page.captureScreenshot',{format:'png'})).data,'base64'));
+        report.viewports.push(metrics);
+      }
+      await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+      await evaluate(`document.querySelector('.heritage-featured-card').scrollIntoView({block:'center',behavior:'instant'});document.querySelector('.heritage-featured-card').click()`);
+      await until(`!!document.querySelector('.library-content-dialog[open]')`, 'featured item details');
+      assert.equal(await evaluate(`document.querySelector('.library-content-dialog').textContent.includes('Complete detail marker.')`),true,'Featured item opens the complete published record');
+      await evaluate(`document.querySelector('button[aria-label="Close details"]').click()`);await until(`!document.querySelector('dialog')`, 'featured X returns home');
+      await evaluate(`(()=>{const input=document.querySelector('.heritage-hero-search input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'nyatiti');input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));})()`);await delay(100);
+      await evaluate(`document.querySelector('.heritage-hero-search').requestSubmit()`);
+      await until(`!!document.querySelector('.discovery-card')&&location.hash.includes('q=nyatiti')`, 'homepage search enters feed');
+      assert.ok(homeQueries.includes('nyatiti'),'Search reaches the public API');
+      assert.equal(await evaluate(`document.querySelector('.discovery-search input').value`),'nyatiti','Search text is retained');
+      report.interactions.push('Public-first entry, honest published featured records, responsive menu with install and X, complete item details, and homepage search through to Discover');
+      homeFixtureMode='empty';await send('Page.navigate',{url:base+(mobileBundle?'/application':'/')});
+      await until(`!!document.querySelector('.heritage-collection-notice')`, 'honest empty collection');
+      assert.equal(await evaluate(`document.querySelectorAll('.heritage-featured-card').length`),0);
+      homeFixtureMode='invalid';await send('Page.reload');
+      await until(`document.querySelector('.heritage-collection-notice')?.textContent.includes('could not load')`, 'collection error state');
+      homeFixtureMode='normal';await evaluate(`document.querySelector('.heritage-collection-notice button').click()`);
+      await until(`document.querySelectorAll('.heritage-featured-card').length===1`, 'collection retry recovers');
+      report.interactions.push('Empty, malformed response and retry recovery never invent cultural records or archive counts');
+      homeTranslated=true;await evaluate(`window.dispatchEvent(new Event('interface-copy-updated'))`);
+      await until(`[...document.querySelectorAll('.heritage-home .interface-text-pair')].some(e=>e.textContent.includes('Community label fixture'))`, 'approved label translation refresh');
+      assert.equal(await evaluate(`(()=>{const pair=[...document.querySelectorAll('.heritage-home .interface-text-pair')].find(e=>e.textContent.includes('Community label fixture'));return pair.querySelector('.interface-english')?.textContent==='Discover the collection'&&pair.querySelector('.interface-english')?.contentEditable==='false';})()`),true,'English stays visible and read-only under the approved community wording');
+      report.interactions.push('Edited community labels refresh with their read-only English meaning underneath');
+      assert.deepEqual(report.runtimeErrors,[]);assert.deepEqual(report.unexpectedApis,[]);report.completedAt=new Date().toISOString();closing=true;await send('Browser.close').catch(()=>{});return;
+    }
     await until('document.querySelectorAll(".discovery-card").length===3', 'discovery');
     assert.equal(readingCalls, 0, 'Browsing cards must not load every conversation');
     fs.mkdirSync('docs/system-audit/screenshots', { recursive: true });
@@ -134,7 +188,11 @@ async function main() {
           assert.ok(metrics.page <= metrics.viewport + 1 && metrics.content <= metrics.available + 2, 'No overflow: ' + JSON.stringify(metrics));
           assert.equal(metrics.players, 2); assert.equal(metrics.images, 1);
           assert.ok(Math.abs(metrics.cardHeight-metrics.paneHeight)<=2, 'Card fills the reading pane: '+JSON.stringify(metrics));
-          assert.ok(Math.abs(metrics.mediaWidth-metrics.cardWidth)<=2 && Math.abs(metrics.mediaHeight-metrics.cardHeight)<=2,'Media fills its entire card');
+          assert.ok(metrics.mediaWidth>0 && metrics.mediaWidth<=metrics.cardWidth+2 && metrics.mediaHeight>0 && metrics.mediaHeight<metrics.cardHeight,'Media fits the card beside or above its controls');
+          for (const [imageWidth,imageHeight] of [[360,960],[960,960],[1280,360]]) {
+            const fit = await evaluate(`(async()=>{const card=document.querySelector(${JSON.stringify(cardSelector)}),image=card.querySelector('.public-media-gallery img');image.removeAttribute('srcset');image.src='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="${imageWidth}" height="${imageHeight}"><rect width="100%" height="100%" fill="#d9b968"/><rect x="1" y="1" width="${imageWidth-2}" height="${imageHeight-2}" fill="none" stroke="red" stroke-width="2"/></svg>');await image.decode();const r=image.getBoundingClientRect(),frame=image.closest('.public-media-asset').getBoundingClientRect(),scale=Math.min(r.width/image.naturalWidth,r.height/image.naturalHeight),w=image.naturalWidth*scale,h=image.naturalHeight*scale,visible={left:r.left+(r.width-w)/2,right:r.left+(r.width+w)/2,top:r.top+(r.height-h)/2,bottom:r.top+(r.height+h)/2};return {fit:getComputedStyle(image).objectFit,width:w,height:h,inside:visible.left>=frame.left-1&&visible.right<=frame.right+1&&visible.top>=frame.top-1&&visible.bottom<=frame.bottom+1,clear:[...card.querySelectorAll('.social-card-caption,.social-card-actions,.social-media-paging')].every(control=>{const c=control.getBoundingClientRect();return visible.right<=c.left+1||visible.left>=c.right-1||visible.bottom<=c.top+1||visible.top>=c.bottom-1;})};})()`);
+            assert.equal(fit.fit,'contain');assert.ok(fit.width>0&&fit.height>0&&fit.inside&&fit.clear,'Complete media edges stay inside the frame and clear of controls: '+JSON.stringify({width,height,imageWidth,imageHeight,...fit}));
+          }
           assert.equal(metrics.captionInside,true); assert.equal(metrics.actionsInside,true);
           const dock = await evaluate(`(()=>{const dock=document.querySelector('.library-media-dock'),r=dock.getBoundingClientRect();return {position:getComputedStyle(dock).position,background:getComputedStyle(dock).backgroundColor,bottom:r.bottom,height:r.height,filters:dock.querySelectorAll('.media-filter-buttons button').length};})()`);
           assert.equal(await evaluate(`getComputedStyle(document.querySelector('.feed-search-bar input')).color`),'rgb(23, 62, 54)','Search text remains readable on its light field');
@@ -196,8 +254,16 @@ async function main() {
 
     const itemDownload = await evaluate('document.querySelector(".discovery-card .public-item-download").href');
     assert.equal(new URL(itemDownload).origin, report.apiOrigin || base); assert.equal(new URL(itemDownload).searchParams.get('id'), 'mixed');
-    await evaluate(`document.querySelector('.social-card-actions button[aria-label^="Save "]').click()`); await until(`!!document.querySelector('.social-card-actions button[aria-label^="Saved "]')`, 'saved feedback'); assert.equal(saveCalls, 1);
-    report.interactions.push('Save uses one API request and confirms the saved state');
+    if (mobileBundle) {
+      await evaluate(`document.querySelector('.social-card-actions button[aria-label^="Save "]').click()`);
+      await until(`!!document.querySelector('.discovery-save-prompt')`,'guest account prompt');
+      assert.equal(new URL(await evaluate(`document.querySelector('.discovery-save-prompt a')?.href`),base).pathname,'/register');
+      assert.equal(saveCalls,0);
+      report.interactions.push('Guest save offers account registration without attempting a write');
+    } else {
+      await evaluate(`document.querySelector('.social-card-actions button[aria-label^="Save "]').click()`); await until(`!!document.querySelector('.social-card-actions button[aria-label^="Saved "]')`, 'saved feedback'); assert.equal(saveCalls, 1);
+      report.interactions.push('Save uses one API request and confirms the saved state');
+    }
     await evaluate('document.querySelector("video").play()');
     await evaluate(`document.querySelector('.discovery-card .social-card-actions button[aria-label="Explore this item"]').click()`);
     await until('!!document.querySelector("dialog .public-transcript-reader")','transcript reader available');
@@ -254,7 +320,7 @@ async function main() {
     console.log(JSON.stringify({ checkedLayouts: report.viewports.length, interactions: report.interactions, runtimeErrors: report.runtimeErrors, liveWrites: 0 }));
     closing=true;await send('Browser.close').catch(() => {});
   } finally {
-    fs.writeFileSync('docs/system-audit/'+(detailsOnly?'explore-details-browser':layoutOnly?'explore-mobile-browser':playersOnly?'explore-players-browser':'explore-web-browser')+'-2026-10-30.json', JSON.stringify(report, null, 2));
+    fs.writeFileSync('docs/system-audit/'+(homeOnly?(mobileBundle?'luo-home-mobile':'luo-home-web'):detailsOnly?'luo-details':layoutOnly?'luo-feed-mobile':playersOnly?'luo-players':'luo-feed-web')+'-2026-11-04.json', JSON.stringify(report, null, 2));
     socket?.close(); browser.kill();
   }
 }

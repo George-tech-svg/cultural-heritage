@@ -4,9 +4,9 @@ Current companion guides: **PRD_USER_GUIDE.md** and **PRD_ADMIN_AND_TRAINING_GUI
 
 ## Web Application User Manual
 
-**Edition 2.0 - 30 October 2026**
+**Edition 2.1 - 4 November 2026**
 
-**Purpose:** help people use the Luo Heritage website, from their first login to their assigned daily tasks.
+**Purpose:** help people use the Luo Heritage website, from their first public visit to their assigned daily tasks.
 
 > **THIS MANUAL IS FOR THE WEB APPLICATION ONLY.**
 >
@@ -50,8 +50,8 @@ Choose a section below to go directly to it. In Word, you may need to hold Ctrl 
 ### If you want to read or learn
 
 1. Open the website address given by your administrator.
-2. If the login screen appears, enter your email and password. Click **Log in**.
-3. On the dashboard, choose a subject from the left menu, such as Dictionary or Proverbs.
+2. The public heritage homepage opens first. Search or browse immediately; use **Sign in** for personal account features.
+3. Choose Discover the collection, a featured item, a learning pathway or Collections. The library sidebar also lists Dictionary, Proverbs and other subjects.
 4. Choose **All** to see all available items. Use **Images**, **Audio**, **Video** or **Transcripts** to narrow the list.
 5. Use **more** for the compact description or **Explore this item** for full details. Open an available audio, video or document using its controls.
 
@@ -92,7 +92,7 @@ You do not need Android Studio, a Play Store account or an App Store account to 
 1. Open your browser.
 2. Enter the website address in the address bar.
 3. Wait for the page to appear.
-4. If you are new, the website normally opens the login page. If you are already logged in, it may open your dashboard.
+4. The website opens the public Luo Heritage homepage. Browse without an account, or choose Sign in. Packaged clients also offer the public welcome screen to signed-out visitors; restored sessions may resume the assigned workspace.
 
 Do not use an address copied from an unknown message. Ask your administrator if you are unsure which website is correct.
 
@@ -171,6 +171,8 @@ Sign out after using a shared computer. Closing a browser window is not a substi
 
 ### Sidebar and Back
 
+The public homepage introduces Luo heritage with a lakeshore illustration, search and actual published collection images. The illustration is decorative, not an archival photograph. Featured cards open full details; empty or unavailable collections are labelled honestly. Homepage search carries its words into Discover. The app wordmark or Heritage home returns to the introduction.
+
 The public sidebar begins with **Install app**, followed by **Explore**, **Discover**, **Collections**, **Browse the library** and **Saved words and items**. Additional tools depend on your account and permissions.
 
 On a computer, the sidebar toggle collapses or expands the navigation. On a phone, it opens a drawer. Scroll inside the drawer to reach more entries; use X or choose a destination to close it. The header Back control returns to the previous screen. With no previous screen, it opens the public library.
@@ -188,6 +190,8 @@ Choose the community language during registration. Public sidebars and mastheads
 Open the round account button for Settings & profile, saved conversations, the assigned staff dashboard and Sign out. Use its Close control, press the trigger again, click outside or press Escape to dismiss it. Administrative editing controls stay in English.
 
 ## 5. Read, search and view cultural content
+
+You can start a search on the public homepage or enter the existing feed. Homepage search preserves your query in Discover. Sign-in is required only when a feature needs an account.
 
 ### Search and filter
 

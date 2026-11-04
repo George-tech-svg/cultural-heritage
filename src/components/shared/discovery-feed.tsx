@@ -34,12 +34,12 @@ export function mixDiscoveryItems(items: ContentItem[]) {
   return mixed;
 }
 
-type Props = { request: FeatureRequest; languageCode: string; languageName?: string; signedIn?: boolean; downloadOrigin?: string; Link: AppLink; onRegister?: () => void };
+type Props = { initialQuery?: string; request: FeatureRequest; languageCode: string; languageName?: string; signedIn?: boolean; downloadOrigin?: string; Link: AppLink; onRegister?: () => void };
 
-export function DiscoveryFeed({ request, languageCode, languageName = "Dholuo", signedIn = false, downloadOrigin, Link, onRegister }: Props) {
+export function DiscoveryFeed({ initialQuery = "", request, languageCode, languageName = "Dholuo", signedIn = false, downloadOrigin, Link, onRegister }: Props) {
   const [category, setCategory] = useState("all");
-  const [query, setQuery] = useState("");
-  const [search, setSearch] = useState("");
+  const [query, setQuery] = useState(initialQuery);
+  const [search, setSearch] = useState(initialQuery);
   const [retry, setRetry] = useState(0);
   const [library, setLibrary] = useState<AppLibrary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -71,7 +71,7 @@ export function DiscoveryFeed({ request, languageCode, languageName = "Dholuo", 
   }, [request, languageCode, category, search, retry]);
 
   // Community changes must not leave another community's category or saved state behind.
-  useEffect(() => { setCategory("all"); setQuery(""); setSearch(""); setCategories([]); }, [languageCode]);
+  useEffect(() => { setCategory("all"); setQuery(initialQuery); setSearch(initialQuery); setCategories([]); }, [languageCode, initialQuery]);
   useEffect(() => { setSaved([]); setJoinItem(""); }, [signedIn, languageCode]);
 
   async function loadMore() {

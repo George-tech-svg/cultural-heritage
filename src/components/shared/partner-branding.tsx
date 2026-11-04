@@ -1,4 +1,5 @@
 "use client";
+import { LuoLandscape } from "./luo-landscape";
 import { InterfaceText } from "@/components/shared/interface-language";
 import { useEffect, useState } from "react";
 import type { FeatureRequest } from "./learning-hub";
@@ -6,6 +7,8 @@ import type { FeatureRequest } from "./learning-hub";
 export function PartnerBranding({ request, variant = "compact" }: { request?: FeatureRequest; variant?: "compact" | "auth" | "footer" }) {
   const [data, setData] = useState<Record<string, string>>({});
   const [naturalWidth, setNaturalWidth] = useState(0);
+  const [failedLogo, setFailedLogo] = useState("");
+  const logo = data.jooust_logo_url && data.jooust_logo_url !== failedLogo ? data.jooust_logo_url : "";
   useEffect(() => {
     let active = true;
     const refresh = () => {
@@ -15,8 +18,9 @@ export function PartnerBranding({ request, variant = "compact" }: { request?: Fe
     refresh(); window.addEventListener("branding-updated", refresh);
     return () => { active = false; window.removeEventListener("branding-updated", refresh); };
   }, [request]);
+  if (variant === "footer") return <div className="heritage-institution-credit">{logo ? <img onError={() => setFailedLogo(logo)} src={logo} alt="JOOUST" loading="lazy" decoding="async" /> : <span className="heritage-institution-symbol" aria-hidden="true">LH</span>}<span><InterfaceText source="Language, culture and living knowledge" /></span></div>;
   return <div aria-hidden="true" data-institution-background="jooust" className={variant === "auth" ? "auth-logo-background" : "institution-logo-background"}>
-    {data.jooust_logo_url && <img src={data.jooust_logo_url} alt="" className={variant === "auth" ? "auth-logo-image" : "institution-logo-image"} decoding="async" onLoad={event=>setNaturalWidth(event.currentTarget.naturalWidth)} style={variant !== "auth" && naturalWidth?{maxWidth:`${Math.min(naturalWidth,320)}px`}:undefined}/>}
+    {logo ? <img onError={() => setFailedLogo(logo)} src={logo} alt="" className={variant === "auth" ? "auth-logo-image" : "institution-logo-image"} decoding="async" onLoad={event=>setNaturalWidth(event.currentTarget.naturalWidth)} style={variant !== "auth" && naturalWidth?{maxWidth:`${Math.min(naturalWidth,320)}px`}:undefined}/> : variant === "auth" ? <LuoLandscape className="auth-landscape" /> : null}
   </div>;
 }
 

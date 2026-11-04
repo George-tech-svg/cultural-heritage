@@ -28,7 +28,7 @@ export function MediaImage({ src = "", alt = "", sizes = "(max-width: 767px) 100
   useEffect(() => { setFallbackFor(null); setUnavailable(false); }, [src]);
   const original = originalMediaSource(src) || src;
   const fallback = fallbackFor === src;
-  return <><img loading="lazy" decoding="async" {...props} style={{ objectFit: "contain", backgroundColor: "#000", ...props.style }} src={fallback ? original : src}
+  return <><img loading="lazy" decoding="async" {...props} style={{ ...props.style, objectFit: "contain", objectPosition: "center", backgroundColor: "#000" }} src={fallback ? original : src}
     {...(!fallback ? responsiveMediaSources(src) : {})} sizes={sizes} alt={alt}
     onLoad={event => { setUnavailable(false); props.onLoad?.(event); }}
     onError={event => {
@@ -55,7 +55,7 @@ export function MediaVideo({ src, poster, ...props }: VideoHTMLAttributes<HTMLVi
     observer.observe(ref.current);
     return () => observer.disconnect();
   }, []);
-  return <div className="w-full min-w-0"><video ref={ref} playsInline {...props} style={{ objectFit: "contain", backgroundColor: "#000", ...props.style }}
+  return <div className="w-full min-w-0"><video ref={ref} playsInline {...props} style={{ ...props.style, objectFit: "contain", objectPosition: "center", backgroundColor: "#000" }}
     onError={event => { if (fallbackFor !== src && originalMediaSource(src)) { setFallbackFor(src!); return; } setFailed(true); props.onError?.(event); }}
     onPlay={event => { pauseOtherMedia(event); props.onPlay?.(event); }} preload={visible ? "metadata" : "none"} src={visible ? fallbackFor === src ? originalMediaSource(src) || src : src : undefined} poster={visible ? poster : undefined} />
     {failed && <p role="alert" className="mt-2 text-sm text-red-900"><InterfaceText source="Video could not load. Check your connection or try the original download." /> <button type="button" className="min-h-11 underline" onClick={() => { setFailed(false); ref.current?.load(); }}><InterfaceText source="Try again" /></button></p>}

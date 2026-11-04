@@ -2,7 +2,7 @@ import { APP_NAME } from "@/lib/brand";
 import { AuthLogoBackground } from "@/components/shared/auth-logo-background";
 import { BrandMark } from "@/components/shared/brand-mark";
 import { InterfaceText } from "@/components/shared/interface-language";
-import { BookOpen } from "lucide-react";
+import { ArrowLeft, BookOpen } from "lucide-react";
 import Link from "next/link";
 
 export function AuthShell({ children }: { children: React.ReactNode }) {
@@ -19,9 +19,9 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
         />
 
         {/* Application identity stays outside the form. */}
-        <div className="auth-introduction relative z-10"><Link href="/application" className="auth-brand"><BrandMark /><span className="font-serif text-2xl">{APP_NAME}</span></Link>
+        <div className="auth-introduction relative z-10"><Link href="/" className="auth-brand"><BrandMark /><span className="font-serif text-2xl">{APP_NAME}</span></Link>
           <AuthLogoBackground />
-          <div className="auth-story"><span className="hero-eyebrow"><BookOpen size={16} aria-hidden="true" /><InterfaceText source="Language. Culture. Connection." /></span><h2 className="font-serif"><InterfaceText source="Your roots. A world of discovery." /></h2><p><InterfaceText source="Keep language and living knowledge close. Learn something new, revisit a familiar story, and carry it forward." /></p>
+          <Link href="/" className="auth-home-link"><ArrowLeft size={16} aria-hidden="true" /><InterfaceText source="Back to Luo Heritage" /></Link><div className="auth-story"><span className="hero-eyebrow"><BookOpen size={16} aria-hidden="true" /><InterfaceText source="Language. Culture. Connection." /></span><h2 className="font-serif"><InterfaceText source="Your roots. A world of discovery." /></h2><p><InterfaceText source="Keep language and living knowledge close. Learn something new, revisit a familiar story, and carry it forward." /></p>
           </div>
         </div>
 

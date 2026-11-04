@@ -1,0 +1,21 @@
+{
+  "files": 32,
+  "targets": {
+    "android": {
+      "matched": 32,
+      "mismatches": []
+    },
+    "ios": {
+      "matched": 32,
+      "mismatches": []
+    }
+  },
+  "androidApk": {
+    "path": "clients\\mobile\\android\\app\\build\\outputs\\apk\\debug\\app-debug.apk",
+    "bytes": 5422178,
+    "sha256": "a1a57a61c112f6a34c47b7f506804858f0ab1b3d08af8ff33c5511263f5c0771",
+    "matchedFiles": 32,
+    "mismatches": [],
+    "build": "Gradle reported BUILD SUCCESSFUL; artifact assets verified against final dist"
+  }
+}

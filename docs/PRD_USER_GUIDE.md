@@ -1,10 +1,10 @@
 # Using Luo Heritage
 
-Updated 30 October 2026.
+Updated 4 November 2026.
 
 ## Find and browse content
 
-The app opens **Log in** first. **Create account** is below it; **Browse the public library** opens public content without registration. Choose your community language during registration. The public navigation has no language selector. Approved Dholuo labels show their smaller, read-only English meaning underneath; untranslated controls remain English. Admin workspaces remain English.
+The app opens the public **Luo Heritage** homepage first on web and packaged clients. Search or browse without an account. **Sign in** opens account access; **Create account** is available below the login form. Choose your community language during registration. The public navigation has no language selector. Approved Dholuo labels show their smaller, read-only English meaning underneath; untranslated controls remain English. Admin workspaces remain English.
 
 The sidebar starts with **Install app**, then **Explore**, **Discover**, **Collections**, **Browse the library** and **Saved words and items**. Use the header **Back** control to return to the preceding screen. The Explore menu opens above the feed in a scrollable dialog, with **Back** and **X** at the top. All options remain reachable on small phones and in landscape. Escape closes the menu.
 
@@ -81,3 +81,7 @@ Complete item downloads: choose **Download complete item (ZIP)** on a collection
 Choose **Install app** at the top of the sidebar. A supported browser shows its native offer when installation is eligible; accept it to install. Safari on iPhone uses **Share**, then **Add to Home Screen**. If the browser does not offer installation, follow its displayed instructions or keep using the browser. Installing does not enable every feature offline.
 
 Terms and Conditions and Privacy Policy describe the current cultural assistant, recovery codes, account deletion, media access, registration language, activity records and local/offline storage. Private downloads may remain on a device after sign-out. The institution must complete its operator, contact, provider, retention and transfer details in the editable policies.
+
+## Shared Luo Heritage design - 4 November 2026
+
+The public homepage introduces Dholuo language and Luo cultural knowledge with an original lakeshore illustration, real published collection images, a working search, learning pathways and contribution links. No archive totals or cultural records are invented. The shared palette uses warm ivory, forest green and muted gold, with restrained backgrounds, clearer headings and consistent cards. The same visual system applies to web, administration, authentication and packaged clients. The fixed black media dock, complete media frames, inline more/less, Back/X, bilingual labels and review workflows remain available. Search entered on the homepage continues in Discover. Use the app wordmark or Heritage home to return to the introduction.

@@ -1,5 +1,9 @@
 # LuoLinguaAI system analysis
 
+> Current visual design and entry (4 November 2026): [public-first Luo Heritage redesign and verification](docs/system-audit/luo-redesign-2026-11-04.md). The owner selected a public homepage first; older login-first notes below are historical.
+
+> Media follow-up (4 November 2026): [complete media frames and shared web/native interface](docs/system-audit/media-fit-2026-11-04.md).
+
 > Historical audit before repairs. Implemented fixes and current verification are documented in [REPAIR_REPORT.md](REPAIR_REPORT.md); findings below describe the original state, not the repaired state.
 
 > Current cross-platform final review: [web, Android and iOS verification, 29 October 2026](docs/system-audit/final-platform-review-2026-10-29.md).

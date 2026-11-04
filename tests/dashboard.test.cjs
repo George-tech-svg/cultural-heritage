@@ -1,3 +1,4 @@
+const React = require('react');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { loader } = require('./load-ts.cjs');
@@ -63,7 +64,12 @@ test('audio-visual library includes eligible media across modules without relaxi
   assert.equal(element.props.canContribute, false);
 });
 
-test('the entry opens login before account creation or explicit public library browsing', () => {
-  const load = loader({ 'next/navigation': { redirect: destination => { throw Object.assign(new Error('redirect'), { destination }); } } });
-  assert.throws(() => load('src/app/page.tsx').default(), error => error.destination === '/login');
+test('the entry opens the public heritage homepage with search and optional sign-in', () => {
+  const { renderToStaticMarkup } = require('react-dom/server');
+  const load = loader();
+  const html = renderToStaticMarkup(React.createElement(load('src/app/page.tsx').default));
+  assert.match(html, /Our words\./);
+  assert.match(html, /Search the heritage collection/);
+  assert.match(html, /href="\/login"/);
+  assert.doesNotMatch(html, /name="password"|Pokomo|Bajuni/);
 });

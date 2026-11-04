@@ -26,6 +26,7 @@ export function AppSidebarView({ modules, pathname, activeModule, onNavigate, Li
     ["/dashboard", "Discover"], ["/explore", "Browse the library"], ["/saved", "Saved words & items"],
   ];
   const more = [
+    ["/welcome", "Heritage home"],
     ["/learn", "Lessons, games & calendar"], ["/tutor", "AI language tutor"],
     ["/chatbot", "CULTURAL HERITAGE"], ["/research", "Research portal"],
     ["/places", "Cultural places map"], ["/knowledge", "Cultural connections"],

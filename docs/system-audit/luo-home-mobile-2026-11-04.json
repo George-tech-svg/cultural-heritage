@@ -1,0 +1,63 @@
+{
+  "mobilePreview": true,
+  "viewports": [
+    {
+      "width": 1440,
+      "page": 1440,
+      "home": 1425,
+      "searchBottom": 581.734375,
+      "heading": "Our words.Our stories.Our living heritage.",
+      "background": "rgb(248, 245, 237)"
+    },
+    {
+      "width": 1024,
+      "page": 1024,
+      "home": 1009,
+      "searchBottom": 509.21875,
+      "heading": "Our words.Our stories.Our living heritage.",
+      "background": "rgb(248, 245, 237)"
+    },
+    {
+      "width": 768,
+      "page": 768,
+      "home": 753,
+      "searchBottom": 575.5,
+      "heading": "Our words.Our stories.Our living heritage.",
+      "background": "rgb(248, 245, 237)"
+    },
+    {
+      "width": 390,
+      "page": 390,
+      "home": 390,
+      "searchBottom": 437.171875,
+      "heading": "Our words.Our stories.Our living heritage.",
+      "background": "rgb(248, 245, 237)"
+    },
+    {
+      "width": 320,
+      "page": 320,
+      "home": 320,
+      "searchBottom": 495.765625,
+      "heading": "Our words.Our stories.Our living heritage.",
+      "background": "rgb(248, 245, 237)"
+    },
+    {
+      "width": 844,
+      "page": 844,
+      "home": 829,
+      "searchBottom": 523.1875,
+      "heading": "Our words.Our stories.Our living heritage.",
+      "background": "rgb(248, 245, 237)"
+    }
+  ],
+  "interactions": [
+    "Public-first entry, honest published featured records, responsive menu with install and X, complete item details, and homepage search through to Discover",
+    "Empty, malformed response and retry recovery never invent cultural records or archive counts",
+    "Edited community labels refresh with their read-only English meaning underneath"
+  ],
+  "runtimeErrors": [],
+  "unexpectedApis": [],
+  "liveWrites": 0,
+  "apiOrigin": "http://localhost:3000",
+  "completedAt": "2026-11-04T08:34:24.510Z"
+}

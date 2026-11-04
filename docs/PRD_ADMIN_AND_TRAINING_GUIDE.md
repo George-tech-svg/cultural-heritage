@@ -1,6 +1,6 @@
 # Administration and training
 
-Updated 30 October 2026.
+Updated 4 November 2026.
 
 ## Master account and administrator passwords
 
@@ -103,8 +103,12 @@ The public Explore list is a scrollable dialog with Back and X. Item details kee
 
 Collection search stays pinned; media filters stay in the small fixed black bottom bar. Public cards use contained media, compact more/less descriptions and automatic next-page loading. Contribute appears within each collection and preserves its selected form through sign-in. Keep public descriptions, usage, place, English meanings, attachments and related items accurate. A missing media type is not a playback failure when no file of that type is published.
 
-Login is the first entry screen. Test Forgot password as a reset-only sequence: email, then code and matching new passwords. Configure EMAIL_PROVIDER (resend or sendgrid), EMAIL_FROM (verified sender) and EMAIL_API_KEY in the local environment, or the equivalent email settings, before expecting delivery. Never put credentials in manuals or screenshots. The project's local delivery configuration remains deferred by the owner; do not report live email delivery as tested.
+The public heritage homepage is the first entry screen. Account, contribution and administration permissions remain enforced after sign-in. Test Forgot password as a reset-only sequence: email, then code and matching new passwords. Configure EMAIL_PROVIDER (resend or sendgrid), EMAIL_FROM (verified sender) and EMAIL_API_KEY in the local environment, or the equivalent email settings, before expecting delivery. Never put credentials in manuals or screenshots. The project's local delivery configuration remains deferred by the owner; do not report live email delivery as tested.
 
 The Master Super Admin edits Terms and Privacy under System. Current implementation notices supplement saved institutional text and are included in the same text fingerprinted during registration. Existing consent evidence is retained. Fill all institution/contact/provider/retention/transfer fields using the actual deployment, and obtain the institution's legal review. Preview both public pages and new registration after changes. Do not overwrite earlier consent evidence or claim that existing accounts accepted a newly revised notice.
 
 Install app remains the first sidebar action. Browser installation depends on eligibility and platform support; iPhone Safari requires Share, then Add to Home Screen. A successful web build or Android APK does not establish physical iOS acceptance.
+
+## Shared Luo Heritage design - 4 November 2026
+
+The public homepage introduces Dholuo language and Luo cultural knowledge with an original lakeshore illustration, real published collection images, a working search, learning pathways and contribution links. No archive totals or cultural records are invented. The shared palette uses warm ivory, forest green and muted gold, with restrained backgrounds, clearer headings and consistent cards. The same visual system applies to web, administration, authentication and packaged clients. The fixed black media dock, complete media frames, inline more/less, Back/X, bilingual labels and review workflows remain available. Search entered on the homepage continues in Discover. Use the app wordmark or Heritage home to return to the introduction.

@@ -1,0 +1,38 @@
+{
+  "success": true,
+  "records": 12,
+  "publishedImagesChecked": 6,
+  "images": [
+    {
+      "status": 200,
+      "type": "image/jpeg",
+      "bytes": 29057
+    },
+    {
+      "status": 200,
+      "type": "image/jpeg",
+      "bytes": 34377
+    },
+    {
+      "status": 200,
+      "type": "image/jpeg",
+      "bytes": 196633
+    },
+    {
+      "status": 200,
+      "type": "image/jpeg",
+      "bytes": 103240
+    },
+    {
+      "status": 200,
+      "type": "image/jpeg",
+      "bytes": 149330
+    },
+    {
+      "status": 200,
+      "type": "image/jpeg",
+      "bytes": 25551
+    }
+  ],
+  "liveWrites": 0
+}

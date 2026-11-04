@@ -11,7 +11,7 @@ test('dashboard menus and home links honor administrator roles while public brow
   const load = loader({
     react: { ...React, useState: () => [true, () => {}] },
     './navigation-link': { NavigationLink: Link },
-    'next/navigation': { usePathname: () => '/dashboard' },
+    'next/navigation': { useRouter: () => ({back() {},replace() {}}), usePathname: () => '/dashboard' },
   });
   const { AppTopbar } = load('src/components/layout/app-topbar.tsx');
   const { UserMenu } = load('src/components/layout/user-menu.tsx');
@@ -31,7 +31,7 @@ test('dashboard menus and home links honor administrator roles while public brow
 test('master-only role flags receive the full sidebar with the correct active dashboard', () => {
   const { AdminSidebar } = loader({
     './navigation-link': { NavigationLink: Link },
-    'next/navigation': { usePathname: () => '/super-admin/dashboard' },
+    'next/navigation': { useRouter: () => ({back() {},replace() {}}), usePathname: () => '/super-admin/dashboard' },
   })('src/components/layout/admin-sidebar.tsx');
   const html = renderToStaticMarkup(React.createElement(AdminSidebar, { isSuperAdmin: false, isMasterSuperAdmin: true, roles: [] }));
   assert.match(html, /href="\/super-admin\/dashboard"[^>]*class="[^"]*border-l-2/);
@@ -61,7 +61,7 @@ test('English navigation keeps each community and record instead of switching to
 test('English header module links retain the selected community', () => {
   const { Header } = loader({
     'next/link': Link,
-    'next/navigation': { usePathname: () => '/eng/ngero', useSearchParams: () => new URLSearchParams('culture=kik') },
+    'next/navigation': { useRouter: () => ({back() {},replace() {}}), usePathname: () => '/eng/ngero', useSearchParams: () => new URLSearchParams('culture=kik') },
     'next-auth/react': { useSession: () => ({ data: null }) },
     '@/components/providers/language-provider': { useLanguage: () => ({ language: { code: 'eng', nativeName: 'English' }, t: code => code }) },
   })('src/components/layout/header.tsx');

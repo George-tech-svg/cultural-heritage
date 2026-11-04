@@ -56,6 +56,23 @@ export function SocialFeedCard({ item, media = item.media, onOpen, onSave, saved
 }) {
   const ref = useRef<HTMLElement>(null);
   const [hidden, setHidden] = useState(false);
+  // Fit the complete attachment above the caption/actions, including translated
+  // labels and an expanded description. Observe actual sizes on every platform.
+  useEffect(() => {
+    const card = ref.current;
+    if (!card) return;
+    const resize = () => {
+      const bounds = card.getBoundingClientRect();
+      const controls = Array.from(card.querySelectorAll<HTMLElement>(".social-card-caption,.social-card-actions"));
+      const top = Math.min(bounds.bottom, ...controls.map(control => control.getBoundingClientRect().top));
+      card.style.setProperty("--social-details-space", hidden ? "0px" : `${Math.ceil(bounds.bottom - top + 12)}px`);
+    };
+    resize();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(resize);
+    observer?.observe(card);
+    card.querySelectorAll(".social-card-caption,.social-card-actions").forEach(control => observer?.observe(control));
+    return () => observer?.disconnect();
+  }, [hidden]);
   const title = english ? item.englishTitle || item.title : item.title;
   const description = english ? item.englishSummary || item.englishBodyText : item.summary || item.bodyText || item.englishSummary;
   useEffect(() => {
