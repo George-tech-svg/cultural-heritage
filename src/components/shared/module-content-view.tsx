@@ -102,7 +102,7 @@ export function ModuleContentView({
 
       </div>
       <BottomMediaControls>
-        <FeedMediaFilters value={filter} onChange={setFilter} />
+        <FeedMediaFilters value={filter} onChange={value => { setFilter(value); if (value === "transcript") setView("grid"); }} />
         {VIEW_MODES.filter(mode => mode.key !== view).map(mode => <button key={mode.key} type="button" title={mode.label} aria-label={`${mode.label} view`} onClick={() => setView(mode.key)} className="media-filter-button">{mode.key === "grid" ? <LayoutGrid size={20} aria-hidden="true" /> : <List size={20} aria-hidden="true" />}<span><InterfaceText source={mode.label} /></span></button>)}
       </BottomMediaControls>
 
@@ -133,7 +133,10 @@ export function ModuleContentView({
 
 function FeedView({ items, mediaForCard, viewLanguageCode, onSave, onOpen, Link }: { items: ContentItem[]; mediaForCard: (i: ContentItem) => MediaItem[]; languageCode: string; viewLanguageCode: string; onSave?: (item: ContentItem) => void; onOpen: (item: ContentItem) => void; Link: AppLink }) {
   const downloadOrigin = useContext(DownloadOrigin);
-  return <SocialFeed className="library-feed">{items.map(item => <SocialFeedCard key={item.id} item={item} media={mediaForCard(item)} english={viewLanguageCode === "eng"} downloadOrigin={downloadOrigin} onOpen={() => onOpen(item)} onSave={onSave ? () => onSave(item) : undefined} Link={Link} className="library-feed-card" />)}</SocialFeed>;
+  const playable = (item: ContentItem) => mediaForCard(item).filter(asset => ["image", "video", "audio"].includes(asset.type));
+  const mediaItems = items.filter(item => playable(item).length);
+  const writtenItems = items.filter(item => !playable(item).length);
+  return <>{mediaItems.length > 0 && <SocialFeed className="library-feed">{mediaItems.map(item => <SocialFeedCard key={item.id} item={item} media={playable(item)} english={viewLanguageCode === "eng"} downloadOrigin={downloadOrigin} onOpen={() => onOpen(item)} onSave={onSave ? () => onSave(item) : undefined} Link={Link} className="library-feed-card" />)}</SocialFeed>}{writtenItems.length > 0 && <section className="library-reading-room"><h2><InterfaceText source="Reading room" /></h2><GridView items={writtenItems} mediaForCard={mediaForCard} onOpen={onOpen} viewLanguageCode={viewLanguageCode} /></section>}</>;
 }
 
 function FeedCard({ item, media, languageCode, viewLanguageCode, onSave, onOpen, detail = false }: { item: ContentItem; media: MediaItem[]; languageCode: string; viewLanguageCode: string; onSave?: (item: ContentItem) => void; onOpen?: () => void; detail?: boolean }) {
@@ -180,7 +183,7 @@ function FeedCard({ item, media, languageCode, viewLanguageCode, onSave, onOpen,
     </article>
   );
 }
-function GridView({ items, mediaForCard, onOpen, viewLanguageCode }: { viewLanguageCode: string; items: ContentItem[]; mediaForCard: (i: ContentItem) => MediaItem[]; onOpen: (item: ContentItem) => void }) {
+export function GridView({ items, mediaForCard, onOpen, viewLanguageCode }: { viewLanguageCode: string; items: ContentItem[]; mediaForCard: (i: ContentItem) => MediaItem[]; onOpen: (item: ContentItem) => void }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 px-2">
       {items.map((item) => {

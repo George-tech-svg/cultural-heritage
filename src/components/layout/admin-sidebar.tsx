@@ -5,6 +5,7 @@ import { InterfaceText } from "@/components/shared/interface-language";
 import { NavigationIcon } from "@/components/shared/navigation-icon";
 import { NavigationLink as Link } from "./navigation-link";
 import { usePathname } from "next/navigation";
+import { PartnerBranding } from "@/components/shared/partner-branding";
 
 type NavItem = { label: string; href: string; icon: string };
 type NavSection = { title?: string; items: NavItem[] };
@@ -82,8 +83,10 @@ export function AdminSidebar({ isSuperAdmin, isMasterSuperAdmin = false, roles, 
 
   return <div className="h-full overflow-y-auto bg-transparent py-4 text-amber-50">
     <InstallAppButton />
+    <Link href="/museum" onClick={onNavigate} className="mx-2 mb-3 flex min-h-11 items-center gap-3 rounded-lg px-4 text-sm"><NavigationIcon href="/museum" /><InterfaceText source="Virtual museum" /></Link>
     {sections.map(renderSection)}
     <nav aria-label="Workspace help" className="mb-4 border-t border-amber-100/15 pt-3"><Link href={isSuperAdmin ? "/super-admin/help" : "/admin/help"} onClick={onNavigate} className={`mx-2 flex min-h-11 items-center rounded-lg px-4 text-sm ${isActive(isSuperAdmin ? "/super-admin/help" : "/admin/help") ? "bg-black/25 text-amber-100" : "text-amber-50/80 hover:bg-black/15"}`}><InterfaceText source="Help & training"/></Link></nav>
     {isSuperAdmin && <div className="mt-8 border-t border-amber-100/15 pt-6">{renderSection(SUPER_ADMIN_SECTION, 999)}</div>}
+    <PartnerBranding variant="footer" />
   </div>;
 }

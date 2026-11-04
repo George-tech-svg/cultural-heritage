@@ -9,6 +9,7 @@ import { prisma } from "@/lib/db";
 import { NATIVE_RETURN_COOKIE, nativeReturnFromCookie, nativeAuthHref } from "@/lib/native-auth-contract";
 import { assertAccountRateLimit } from "@/lib/account-security";
 import { getNativeSessionUserId } from "@/lib/native-auth";
+import { REMEMBERED_SESSION_SECONDS } from "@/lib/session-policy";
 
 export type LanguageRole = {
   languageId: number;
@@ -49,8 +50,8 @@ export const { handlers, auth: uncachedAuth, signIn, signOut } = NextAuth({
       });
     },
   },
-  session: { strategy: "jwt", maxAge: 10 * 60 },
-  jwt: { maxAge: 10 * 60 },
+  session: { strategy: "jwt", maxAge: REMEMBERED_SESSION_SECONDS },
+  jwt: { maxAge: REMEMBERED_SESSION_SECONDS },
   pages: {
     signIn: "/login",
     error: "/login",

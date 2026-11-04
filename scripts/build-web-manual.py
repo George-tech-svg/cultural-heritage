@@ -157,7 +157,7 @@ footer{margin-top:36px;padding-top:15px;border-top:1px solid #d8c8ae;font-size:1
 @media(max-width:700px){main{margin:0;padding:25px 20px}h1{font-size:34px}h2{font-size:23px}table{font-size:13px}th,td{padding:7px}.brand{letter-spacing:1px}}
 @page{size:A4;margin:17mm 18mm 21mm;@bottom-center{content:"WEB APPLICATION ONLY · Browser user guide - 4 November 2026  |  Page " counter(page);font:8pt Arial;color:#665441}}
 @media print{body{background:white;font-size:10.5pt;line-height:1.45}main{max-width:none;margin:0;padding:0;border:0}.brand img{width:72px;height:72px}h1{font-size:31pt}h2{font-size:18pt;margin-top:23px}h3{font-size:12pt;margin-top:17px}h1,h2,h3{break-after:avoid}p,li{orphans:3;widows:3}li{margin:5px 0}table{font-size:9.2pt}thead{display:table-header-group}tr{break-inside:avoid}th,td{padding:7px}th{background:#eee4cf;color:#412910}.notice{break-inside:avoid}.notice p:first-child{font-size:12pt}.new-page{break-before:page}.brand,.notice,th,.flow{print-color-adjust:exact}footer{display:none}}
-</style></head><body><main>""" + "\n".join(output) + '<footer>Web application user guide. Edition 2.1 · 4 November 2026.</footer></main></body></html>'
+</style></head><body><main>""" + "\n".join(output) + '<footer>Web application user guide. Edition 2.2 · 4 November 2026.</footer></main></body></html>'
     for href in re.findall(r'href="#([^"]+)"', document):
         assert href in anchors, f"Missing contents destination: {href}"
     SOURCE.with_suffix(".html").write_text(document, encoding="utf-8")

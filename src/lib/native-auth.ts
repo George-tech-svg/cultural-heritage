@@ -3,10 +3,11 @@ import { prisma } from "@/lib/db";
 import { NativeAuthorizationSchema, NativeExchangeSchema, NativeRefreshSchema, NATIVE_AUTH_CALLBACK } from "@/lib/native-auth-contract";
 import type { Prisma } from "@prisma/client";
 import { z } from "zod";
+import { REMEMBERED_SESSION_SECONDS } from "@/lib/session-policy";
 
 const GRANT_LIFETIME = 2 * 60 * 1000;
 const SESSION_LIFETIME = 10 * 60 * 1000;
-const REFRESH_LIFETIME = 30 * 24 * 60 * 60 * 1000;
+const REFRESH_LIFETIME = REMEMBERED_SESSION_SECONDS * 1000;
 const GrantPayload = z.object({ userId: z.string().min(1), challenge: z.string().regex(/^[A-Za-z0-9_-]{43}$/) });
 const digest = (value: string) => createHash("sha256").update(value).digest("hex");
 export const pkceChallenge = (verifier: string) => createHash("sha256").update(verifier).digest("base64url");

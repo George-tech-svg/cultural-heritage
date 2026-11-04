@@ -172,7 +172,7 @@ body { color: var(--heritage-ink); }
 .sidebar-link svg { color: #8ccfc2; }
 .sidebar-link:has([aria-current="page"]) { background: #ffffff10; border-left-color: var(--heritage-gold); }
 .sidebar-link:has([aria-current="page"]) svg { color: var(--heritage-gold); }
-.heritage-sidebar summary { font-size: .82rem; }
+.heritage-sidebar .sidebar-section-heading { font-size: .82rem; }
 .workspace-heading { border-bottom: 1px solid var(--heritage-line); padding-bottom: 1.25rem; }
 .workspace-heading h1 { color: #173c46; letter-spacing: -.025em; }
 .workspace-heading.compact-collection-heading { padding-top: 0; padding-bottom: .5rem; }

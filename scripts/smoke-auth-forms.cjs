@@ -53,18 +53,14 @@ async function main() {
       await fs.mkdir(path.join(process.cwd(), 'docs/system-audit/screenshots'), {recursive:true});
       for (const route of ['/login', '/register']) {
         await send('Page.navigate', {url:base+route});
-        await until(() => evaluate(`location.pathname===${JSON.stringify(route)} && !!document.querySelector('.auth-form-content input') && !!document.querySelector('.auth-introduction .auth-logo-image')?.naturalWidth`), route+' institutional logo loaded');
-        for (const width of [1366, 390, 320]) {
-          await send('Emulation.setDeviceMetricsOverride', {width,height:900,deviceScaleFactor:1,mobile:width<768});
+        await until(() => evaluate(`location.pathname===${JSON.stringify(route)} && !!document.querySelector('.auth-form-content input')`), route+' compact form loaded');
+        for (const width of [1366,390,320]) {
+          await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width<768});
           await evaluate('scrollTo(0,0);document.fonts.ready');
-          const geometry = await evaluate(`(()=>{const logo=document.querySelector('.auth-logo-image'), form=document.querySelector('.auth-form-surface'), brand=document.querySelector('.auth-brand img');const a=logo.getBoundingClientRect(),b=form.getBoundingClientRect(),c=brand.getBoundingClientRect();return{logoWidth:a.width,naturalWidth:logo.naturalWidth,logoBottom:a.bottom,formTop:b.top,separate:innerWidth>=768?a.right<=b.left:a.bottom<=b.top,opaque:getComputedStyle(logo).opacity==='1',clean:!form.querySelector('[data-institution-background]'),fits:document.documentElement.scrollWidth<=innerWidth,brandWidth:c.width};})()`);
-          assert.equal(geometry.separate,true,route+' logo is outside the form at '+width);
-          assert.equal(geometry.clean,true);assert.equal(geometry.opaque,true);assert.equal(geometry.fits,true);
-          assert.ok(geometry.logoWidth>=(width>=768?300:160));assert.ok(geometry.brandWidth>=64);
-          if(width<768)assert.ok(geometry.logoBottom<700,'Phone logo is visible before the form');
-          const shot=await send('Page.captureScreenshot',{format:'png'});
-          await fs.writeFile(path.join(process.cwd(),'docs/system-audit/screenshots',route.slice(1)+'-logo-'+width+'.png'),Buffer.from(shot.data,'base64'));
-          console.log('PASS '+route+' '+width+'px: clear '+Math.round(geometry.logoWidth)+'px logo (source '+geometry.naturalWidth+'px), separate form, no overflow');
+          const geometry=await evaluate(`(()=>{const form=document.querySelector('.auth-form-surface'),header=document.querySelector('.auth-compact-header'),brand=document.querySelector('.auth-brand img'),f=form.getBoundingClientRect(),h=header.getBoundingClientRect();return{fits:document.documentElement.scrollWidth<=innerWidth,formVisible:f.top>=h.bottom-1,brandWidth:brand.getBoundingClientRect().width,clean:!document.querySelector('.auth-introduction,.auth-logo-image,[data-institution-background]')};})()`);
+          assert.equal(geometry.fits,true);assert.equal(geometry.clean,true);assert.equal(geometry.formVisible,true);assert.ok(geometry.brandWidth<=40);
+          const shot=await send('Page.captureScreenshot',{format:'png'});await fs.writeFile(path.join(process.cwd(),'docs/system-audit/screenshots',route.slice(1)+'-compact-'+width+'.png'),Buffer.from(shot.data,'base64'));
+          console.log('PASS '+route+' '+width+'px: compact form, no repeated introduction or institutional background, no overflow');
         }
       }
       assert.deepEqual(failures,[]);

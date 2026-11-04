@@ -5,6 +5,8 @@ import { InterfaceText } from "@/components/shared/interface-language";
 import type { ComponentType, ReactNode } from "react";
 import { NavigationIcon } from "./navigation-icon";
 import { moduleHref } from "@/lib/app-navigation";
+import { PartnerBranding } from "./partner-branding";
+import type { FeatureRequest } from "./learning-hub";
 
 export type ModuleItem = {
   code: string;
@@ -12,7 +14,8 @@ export type ModuleItem = {
   baseName: string;
 };
 
-export function AppSidebarView({ modules, pathname, activeModule, onNavigate, Link, staffHref }: {
+export function AppSidebarView({ modules, pathname, activeModule, onNavigate, Link, staffHref, brandingRequest }: {
+  brandingRequest?: FeatureRequest;
   staffHref?: string;
   communityControls?: ReactNode;
   modules: ModuleItem[];
@@ -23,7 +26,7 @@ export function AppSidebarView({ modules, pathname, activeModule, onNavigate, Li
 }) {
   const items = modules.filter(module => !["ai_tutor", "language_tutor", "tutor", "games", "learning", "cultural_calendar", "chatbot", "research"].includes(module.code));
   const primary = [
-    ["/dashboard", "Discover"], ["/explore", "Browse the library"], ["/saved", "Saved words & items"],
+    ["/dashboard", "Discover"], ["/explore", "Browse the library"], ["/saved", "Saved words & items"], ["/museum", "Virtual museum"],
   ];
   const more = [
     ["/welcome", "Heritage home"],
@@ -49,19 +52,20 @@ export function AppSidebarView({ modules, pathname, activeModule, onNavigate, Li
           const active = pathname === href && !(href === "/dashboard" && activeModule);
           return <Link key={href} href={href} onClick={onNavigate} className={`${linkClass} ${active ? "border-amber-400 bg-black/25 font-semibold" : "border-transparent"}`}><NavigationIcon href={href} /><span aria-current={active ? "page" : undefined}><InterfaceText source={label} /></span></Link>;
         })}
-        <details key={`collections:${pathname}:${activeModule || ""}`} open={pathname === "/dashboard" && !!activeModule} className="border-t border-amber-100/15">
-          <summary className="min-h-12 cursor-pointer px-5 py-3 font-semibold text-amber-50"><InterfaceText source="Collections" /></summary>
+        <section className="border-t border-amber-100/15">
+          <h2 className="sidebar-section-heading px-5 py-3 font-semibold text-amber-50 underline underline-offset-4"><InterfaceText source="Collections" /></h2>
           {items.map(item => {
             const active = pathname === "/dashboard" && activeModule === item.code;
             return <Link key={item.code} href={moduleHref(item.code)} onClick={onNavigate} className={`${linkClass} ${active ? "border-amber-400 bg-black/25 font-semibold" : "border-transparent"}`}><NavigationIcon href={moduleHref(item.code)} /><span aria-current={active ? "page" : undefined}><InterfaceText source={item.baseName} /></span></Link>;
           })}
-        </details>
+        </section>
         {primary.slice(1).map(([href, label]) => <Link key={href} href={href} onClick={onNavigate} className={`${linkClass} ${pathname === href ? "border-amber-400 bg-black/25 font-semibold" : "border-transparent"}`}><NavigationIcon href={href} /><span aria-current={pathname === href ? "page" : undefined}><InterfaceText source={label} /></span></Link>)}
-        <details key={`more:${pathname}`} open={more.some(([href]) => pathname === href) || !!staffHref && pathname === staffHref} className="border-t border-amber-100/15">
-          <summary className="min-h-12 cursor-pointer px-5 py-3 font-semibold text-amber-50"><InterfaceText source="More & settings" /></summary>
+        <section className="border-t border-amber-100/15">
+          <h2 className="sidebar-section-heading px-5 py-3 font-semibold text-amber-50 underline underline-offset-4"><InterfaceText source="More & settings" /></h2>
           {staffHref && <Link href={staffHref} onClick={onNavigate} className={`${linkClass} border-transparent`}><InterfaceText source="Staff content workspace" /></Link>}
           {more.map(([href, label]) => <Link key={href} href={href} onClick={onNavigate} className={`${linkClass} ${pathname === href ? "border-amber-400 bg-black/25 font-semibold" : "border-transparent"}`}><NavigationIcon href={href} /><span aria-current={pathname === href ? "page" : undefined}><InterfaceText source={label} /></span></Link>)}
-        </details>
+        </section>
+        <PartnerBranding variant="footer" request={brandingRequest} />
       </nav>
 
     </div>

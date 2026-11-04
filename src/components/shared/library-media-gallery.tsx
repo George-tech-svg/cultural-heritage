@@ -26,12 +26,13 @@ export function LibraryMediaGallery({ item, media = item.media, onOpen, immersiv
   useEffect(() => {
     if (!immersive || !gallery.current || typeof ResizeObserver === "undefined") return;
     let previous = gallery.current.clientWidth;
+    let frame = 0;
     const observer = new ResizeObserver(() => {
       const node = gallery.current;
-      if (node && node.clientWidth !== previous) { previous = node.clientWidth; node.scrollTo({ left: activeRef.current * node.clientWidth, behavior: "instant" }); }
+      if (node && node.clientWidth !== previous) { previous = node.clientWidth; cancelAnimationFrame(frame); frame = requestAnimationFrame(() => node.scrollTo({ left: activeRef.current * node.clientWidth, behavior: "instant" })); }
     });
     observer.observe(gallery.current);
-    return () => observer.disconnect();
+    return () => { observer.disconnect(); cancelAnimationFrame(frame); };
   }, [immersive]);
   function move(index: number) {
     const node = gallery.current;

@@ -11,6 +11,7 @@ const playersOnly = process.argv.includes('--players-only');
 const homeOnly = process.argv.includes('--home-only');
 const mobileBundle = process.argv.includes('--mobile-preview');
 const detailsOnly = process.argv.includes('--details-only');
+const museumOnly = process.argv.includes('--museum-only');
 const report = { mobilePreview: layoutOnly || process.argv.includes('--mobile-preview'), viewports: [], interactions: [], runtimeErrors: [], unexpectedApis: [], liveWrites: 0 };
 const languages = [{ id: 1, code: 'luo', name: 'Luo', nativeName: 'Dholuo' }, { id: 2, code: 'eng', name: 'English', nativeName: 'English' }];
 const modules = ['oral_histories', 'songs', 'folktales'].map(code => ({ code, baseName: code === 'songs' ? 'Traditional Songs' : code === 'folktales' ? 'Folktales' : 'Oral Histories', title: code, href: `/dashboard?module=${code}`, contributionHref: `/contribute/${code}` }));
@@ -63,6 +64,7 @@ async function main() {
       if (url.pathname === '/api/v1/account/conversations') return [];
       if (url.pathname === '/api/languages') return languages;
       if (url.pathname === '/api/interface-copy') return { catalog: homeTranslated ? {'Discover the collection':{english:'Discover the collection',local:'Community label fixture'}} : {} };
+      if (url.pathname === '/api/v1/museum') return {tours:[]};
       if (url.pathname === '/api/branding' || url.pathname === '/api/v1/activity') return {};
       if (url.pathname === '/api/app-version') return { version: 'development' };
       if (url.pathname === '/api/v1/reading') { readingCalls++; return reading(url.searchParams.get('id')); }
@@ -73,6 +75,7 @@ async function main() {
       const message = JSON.parse(event.data);
       if (pending.has(message.id)) { const callback = pending.get(message.id); pending.delete(message.id); callback(message); }
       if (message.method === 'Runtime.exceptionThrown') report.runtimeErrors.push(message.params.exceptionDetails.exception?.description || message.params.exceptionDetails.text);
+      if (message.method === 'Runtime.consoleAPICalled' && message.params.args?.[0]?.value === 'LUO_UI_ERROR') report.runtimeErrors.push(message.params.args[1]?.value || 'Unknown window error');
       if (message.method === 'Fetch.requestPaused') void (async () => {
         const p = message.params, url = new URL(p.request.url);
         if (/^\/api\/media\/audio2?\/file$/.test(url.pathname)) return send('Fetch.fulfillRequest', { requestId: p.requestId, responseCode: 200, responseHeaders: [{ name: 'Content-Type', value: 'audio/wav' }, { name: 'Accept-Ranges', value: 'bytes' }], body: wav.toString('base64') });
@@ -83,6 +86,7 @@ async function main() {
       })().catch(error => { if (!closing && !/Invalid InterceptionId/.test(error.message)) report.runtimeErrors.push(error.message); });
     };
     await send('Runtime.enable'); await send('Page.enable'); await send('Fetch.enable', { patterns: [{ urlPattern: '*/api/*' }] });
+    await send('Page.addScriptToEvaluateOnNewDocument',{source:`window.addEventListener('error',event=>{if(event.message)console.error('LUO_UI_ERROR',event.message);});`});
     await send('Page.navigate', { url: base + (homeOnly ? mobileBundle ? '/application' : '/' : '/application#/dashboard') });
     if (homeOnly) {
       await until(`!!document.querySelector('.heritage-home h1')`, 'public heritage entry');
@@ -129,7 +133,22 @@ async function main() {
       report.interactions.push('Edited community labels refresh with their read-only English meaning underneath');
       assert.deepEqual(report.runtimeErrors,[]);assert.deepEqual(report.unexpectedApis,[]);report.completedAt=new Date().toISOString();closing=true;await send('Browser.close').catch(()=>{});return;
     }
-    await until('document.querySelectorAll(".discovery-card").length===3', 'discovery');
+    if(museumOnly){
+      await evaluate(`location.hash='/museum'`);await until(`!!document.querySelector('.museum-exhibits button[aria-label^="Open "]')`,'museum collection');
+      for(const [width,height] of [[1440,1000],[390,844],[320,700],[844,390]]){
+        await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<768});
+        await evaluate(`document.querySelector('main').scrollTo(0,0)`);await delay(200);
+        assert.equal(await evaluate(`(()=>{const main=document.querySelector('main'),museum=document.querySelector('.virtual-museum');return document.documentElement.scrollWidth<=innerWidth&&main.scrollWidth<=main.clientWidth+1&&museum.scrollWidth<=museum.clientWidth+1;})()`),true,'Museum fits '+width+'x'+height);
+        fs.writeFileSync('docs/system-audit/screenshots/owner-museum-'+width+'.png',Buffer.from((await send('Page.captureScreenshot',{format:'png'})).data,'base64'));
+        await evaluate(`document.querySelector('.museum-exhibits button[aria-label^="Open "]').click()`);await until(`!!document.querySelector('dialog .library-item-details')`,'museum detail');
+        assert.equal(await evaluate(`(()=>{const d=document.querySelector('dialog'),media=d.querySelector('.public-media-gallery').getBoundingClientRect(),text=d.querySelector('.library-item-details').getBoundingClientRect();return text.top>=media.bottom-1&&d.scrollWidth<=d.clientWidth;})()`),true,'Museum media sits above its complete descriptions at '+width);
+        await evaluate(`document.querySelector('dialog button[aria-label="Close details"]').click()`);await until(`!document.querySelector('dialog')`,'close exhibit');
+        report.viewports.push({width,height,museumFits:true,stackedExhibitDetails:true});
+      }
+      report.interactions.push('Museum gallery and stacked complete exhibit details fit desktop, portrait phones and landscape; live tours remain honestly unconfigured');
+      assert.deepEqual(report.runtimeErrors,[]);assert.deepEqual(report.unexpectedApis,[]);report.completedAt=new Date().toISOString();closing=true;await send('Browser.close').catch(()=>{});return;
+    }
+    await until('document.querySelectorAll(".discovery-card").length===2', 'discovery');
     assert.equal(readingCalls, 0, 'Browsing cards must not load every conversation');
     fs.mkdirSync('docs/system-audit/screenshots', { recursive: true });
     if (detailsOnly) {
@@ -160,7 +179,7 @@ async function main() {
       for (const route of ['/dashboard', '/dashboard?module=oral_histories']) {
         await evaluate(`location.hash=${JSON.stringify(route)}`);
         const cardSelector = route.includes('?') ? '.library-feed-card' : '.discovery-card';
-        await until(`document.querySelectorAll(${JSON.stringify(cardSelector)}).length===3`, route);
+        await until(`document.querySelectorAll(${JSON.stringify(cardSelector)}).length===2`, route);
         const states = width >= 1024 ? ['collapsed', 'expanded'] : ['responsive'];
         for (const state of states) {
           if (state !== 'responsive') { const button = state === 'collapsed' ? 'Collapse sidebar' : 'Expand sidebar'; await evaluate(`document.querySelector('button[aria-label=${JSON.stringify(button)}]')?.click()`); }
@@ -195,7 +214,7 @@ async function main() {
           }
           assert.equal(metrics.captionInside,true); assert.equal(metrics.actionsInside,true);
           const dock = await evaluate(`(()=>{const dock=document.querySelector('.library-media-dock'),r=dock.getBoundingClientRect();return {position:getComputedStyle(dock).position,background:getComputedStyle(dock).backgroundColor,bottom:r.bottom,height:r.height,filters:dock.querySelectorAll('.media-filter-buttons button').length};})()`);
-          assert.equal(await evaluate(`getComputedStyle(document.querySelector('.feed-search-bar input')).color`),'rgb(23, 62, 54)','Search text remains readable on its light field');
+          assert.equal(await evaluate(`getComputedStyle(document.querySelector('.feed-search-bar input')).color`),'rgb(255, 255, 255)','Search text remains readable on its black field');
           assert.equal(dock.position,'fixed');assert.equal(dock.background,'rgb(8, 12, 11)');assert.ok(Math.abs(dock.bottom-height)<=1);assert.equal(dock.filters,5);
           assert.equal(await evaluate(`!!document.querySelector('select[aria-label="Community language"],select[aria-label="Choose community"],select[aria-label="Content language"]')`),false);
 
@@ -234,6 +253,21 @@ async function main() {
     }
     if (!playersOnly) report.interactions.push('Fixed black filter dock, pinned search and direct contribution links work across all eight collections; public language selectors are absent');
 
+    await evaluate(`location.hash='/dashboard'`);await until(`document.querySelectorAll('.discovery-card').length===2`,'media discovery');
+    await evaluate(`document.querySelector('button[aria-label="Grid view"]').click()`);await until(`!!document.querySelector('.discovery-grid')&&!document.querySelector('.social-feed')`,'discovery grid');
+    await evaluate(`document.querySelector('button[aria-label="Transcripts"]').click()`);await until(`!!document.querySelector('.discovery-grid button[aria-label^="Open A long fictional"]')`,'written reading cards');
+    assert.equal(await evaluate(`!document.querySelector('.social-feed')&&!!document.querySelector('button[aria-label="Feed view"]')`),true,'Written items use the reading view with a working return to Feed');
+    await evaluate(`document.querySelector('button[aria-label="Feed view"]').click()`);await until(`document.querySelectorAll('.discovery-card').length===2`,'return to media feed');
+    assert.equal(await evaluate(`!document.querySelector('.social-feed .media-document')`),true,'Documents never become feed slides');
+    const previousVisit=await evaluate(`localStorage.getItem('luo-discovery-visit')`);
+    await evaluate(`document.querySelector('.masthead-museum').click()`);await until(`!!document.querySelector('.virtual-museum .museum-exhibits button[aria-label^="Open "]')`,'museum exhibits');
+    assert.equal(await evaluate(`document.querySelector('.museum-live-tours').textContent.includes('when the museum team adds them')`),true,'No unconfigured live tours are invented');
+    await evaluate(`document.querySelector('.museum-exhibits button[aria-label^="Open "]').click()`);await until(`!!document.querySelector('dialog .library-item-details')`,'museum item details');
+    assert.equal(await evaluate(`(()=>{const d=document.querySelector('dialog'),m=d.querySelector('.public-media-gallery').getBoundingClientRect(),t=d.querySelector('.library-item-details').getBoundingClientRect();return t.top>=m.bottom-1;})()`),true,'Full item details place the media above the descriptions');
+    await evaluate(`document.querySelector('dialog button[aria-label="Close details"]').click()`);await until(`!document.querySelector('dialog')`,'close museum exhibit');
+    await evaluate(`location.hash='/dashboard'`);await until(`document.querySelectorAll('.discovery-card').length===2`,'return from museum');
+    assert.notEqual(await evaluate(`localStorage.getItem('luo-discovery-visit')`),previousVisit,'Returning to discovery creates a fresh rotation');
+    report.interactions.push('Discover Feed/Grid toggle, separate transcript reading, museum navigation/exhibits, honest empty live tours, stacked full details and a fresh visit rotation');
     if (layoutOnly) { assert.deepEqual(report.runtimeErrors,[]);assert.deepEqual(report.unexpectedApis,[]);report.completedAt=new Date().toISOString();closing=true;await send('Browser.close').catch(()=>{});return; }
     if (!playersOnly) report.interactions.push('Inline underlined more/less controls expand and restore one-line phone and two-line desktop previews across every tested layout');
     await send('Emulation.setDeviceMetricsOverride', {width:390,height:844,deviceScaleFactor:1,mobile:true});
@@ -247,7 +281,7 @@ async function main() {
       assert.ok(dimensions.width<=dimensions.frameWidth+1 && dimensions.height>0);
     }
     await evaluate(`document.querySelector('.discovery-card button[aria-label="Next attachment"]').click()`);
-    await until('document.querySelector(".social-media-count").textContent==="2 / 4" && document.querySelector("video").readyState>=1','video attachment visible');
+    await until('document.querySelector(".social-media-count").textContent==="2 / 3" && document.querySelector("video").readyState>=1','video attachment visible');
     const videoStyle=await evaluate(`({fit:getComputedStyle(document.querySelector('video')).objectFit,background:getComputedStyle(document.querySelector('video')).backgroundColor,controls:document.querySelector('video').controls})`);
     assert.deepEqual(videoStyle,{fit:'contain',background:'rgb(0, 0, 0)',controls:true});
     report.interactions.push('Portrait and panoramic images and video keep their full frames with black unused space');
@@ -291,7 +325,7 @@ async function main() {
     report.interactions.push('Full 216-turn reader, complete text download, honest English fallback and dialog dismissal');
     await evaluate('document.querySelector("video").play()'); assert.equal(await evaluate('document.querySelector("video").paused'), false);
     await evaluate(`document.querySelector('.discovery-card button[aria-label="Next attachment"]').click()`);
-    await until('document.querySelector(".social-media-count").textContent==="3 / 4"', 'audio attachment');
+    await until('document.querySelector(".social-media-count").textContent==="3 / 3"', 'audio attachment');
     assert.equal(await evaluate('document.querySelector("video").paused'),true);
     await evaluate(`document.querySelectorAll('audio')[0].play()`);
     await evaluate(`document.querySelectorAll('.discovery-card')[1].scrollIntoView({block:'start',behavior:'instant'})`);
@@ -300,19 +334,17 @@ async function main() {
     assert.equal(await evaluate('document.querySelectorAll("audio")[1].paused'),false);
     await evaluate(`document.querySelectorAll('.discovery-card')[0].scrollIntoView({block:'start',behavior:'instant'})`);
     await until('document.querySelectorAll("audio")[1].paused', 'next card audio pauses');
-    await evaluate(`document.querySelector('.discovery-card button[aria-label="Next attachment"]').click()`);
-    await until('document.querySelector(".social-media-count").textContent==="4 / 4"', 'document attachment');
-    assert.equal(await evaluate('!document.querySelector(".discovery-card .media-document").inert'),true);
+    assert.equal(await evaluate('document.querySelector(".discovery-card .media-document")===null'),true,'Documents stay in the reading view and full details');
     await evaluate(`document.querySelector('.discovery-card button[aria-label="Hide details"]').click()`);
     await until('!document.querySelector(".discovery-card").querySelector(".social-card-caption")','details hide');
     await evaluate(`document.querySelector('.discovery-card button[aria-label="Show details"]').click()`);
     await until('!!document.querySelector(".discovery-card").querySelector(".social-card-caption")','details restore');
-    report.interactions.push('Horizontal attachment paging preserves video/audio/document access; sliding or scrolling away pauses playback; details toggle restores overlays');
+    report.interactions.push('Horizontal attachment paging preserves video/audio access and leaves documents in full details; sliding or scrolling away pauses playback; details toggle restores overlays');
     paginateMode = true;
     await evaluate('location.hash="/dashboard?module=songs"');await until('!!document.querySelector(".library-feed-card")','leave discovery before pagination check');
     await evaluate('location.hash="/dashboard"');await until('!!document.querySelector(".feed-load-more")','automatic pagination marker');
-    await evaluate(`document.querySelectorAll('.discovery-card')[2].scrollIntoView({block:'end',behavior:'instant'})`);
-    await until('document.querySelectorAll(".discovery-card").length===4','automatic next page');
+    await evaluate(`document.querySelectorAll('.discovery-card')[1].scrollIntoView({block:'end',behavior:'instant'})`);
+    await until('document.querySelectorAll(".discovery-card").length===3','automatic next page');
     assert.equal(pageCalls,1);assert.equal(await evaluate('!!document.querySelector(".discovery-aside")'),false);
     report.interactions.push('Scrolling loads the next page once without a button click; curiosity links stay outside the feed');
     assert.deepEqual(report.unexpectedApis, []); assert.deepEqual(report.runtimeErrors, []);
@@ -320,7 +352,7 @@ async function main() {
     console.log(JSON.stringify({ checkedLayouts: report.viewports.length, interactions: report.interactions, runtimeErrors: report.runtimeErrors, liveWrites: 0 }));
     closing=true;await send('Browser.close').catch(() => {});
   } finally {
-    fs.writeFileSync('docs/system-audit/'+(homeOnly?(mobileBundle?'luo-home-mobile':'luo-home-web'):detailsOnly?'luo-details':layoutOnly?'luo-feed-mobile':playersOnly?'luo-players':'luo-feed-web')+'-2026-11-04.json', JSON.stringify(report, null, 2));
+    fs.writeFileSync('docs/system-audit/'+(museumOnly?'owner-museum':homeOnly?(mobileBundle?'luo-home-mobile':'luo-home-web'):detailsOnly?'luo-details':layoutOnly?'luo-feed-mobile':playersOnly?'luo-players':'luo-feed-web')+'-2026-11-04.json', JSON.stringify(report, null, 2));
     socket?.close(); browser.kill();
   }
 }

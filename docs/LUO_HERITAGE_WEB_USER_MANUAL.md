@@ -4,7 +4,7 @@ Current companion guides: **PRD_USER_GUIDE.md** and **PRD_ADMIN_AND_TRAINING_GUI
 
 ## Web Application User Manual
 
-**Edition 2.1 - 4 November 2026**
+**Edition 2.2 - 4 November 2026**
 
 **Purpose:** help people use the Luo Heritage website, from their first public visit to their assigned daily tasks.
 
@@ -17,6 +17,10 @@ Current companion guides: **PRD_USER_GUIDE.md** and **PRD_ADMIN_AND_TRAINING_GUI
 This guide explains the current web interface reviewed in the project. Your administrator decides which version is available on your website. Some pages depend on your account permissions, approved content and connected services. If a described option is missing, use the help steps in Section 16. A feature marked **Coming soon** is not ready to use.
 
 **Website address:** use the address provided by your JOOUST administrator.
+
+**Current interface:** the compact black search bar and Feed/Grid controls are shared across Discover and collections. Returning visits rotate published media. Transcripts and written-only items open in a reading view. Explore this item places the media above the full descriptions, with Back and X to return. Sign-in opens a compact form without repeating the homepage introduction or institutional background.
+
+**Virtual museum:** open the museum from the homepage, app header, sidebar or Explore. Browse published artifacts and available OBJ models. Live tours appear only after administrators add approved HTTPS links under Virtual museum tours in system settings. JOOUST and NRF are acknowledged as project partners; approved logos appear in partner credits.
 
 **Who should use this manual?** Community members, students, teachers, contributors, cultural reviewers, editors, publishers and administrators.
 
@@ -92,7 +96,7 @@ You do not need Android Studio, a Play Store account or an App Store account to 
 1. Open your browser.
 2. Enter the website address in the address bar.
 3. Wait for the page to appear.
-4. The website opens the public Luo Heritage homepage. Browse without an account, or choose Sign in. Packaged clients also offer the public welcome screen to signed-out visitors; restored sessions may resume the assigned workspace.
+4. New visitors see the public Luo Heritage homepage. Browse without an account, or choose Sign in. A returning signed-in account opens its platform dashboard directly. Remembered browser and protected native sessions last up to 90 days; active browser sessions renew. Sign out on shared devices. Account suspension, password resets, expired sessions and clearing browser data can require sign-in again.
 
 Do not use an address copied from an unknown message. Ask your administrator if you are unsure which website is correct.
 
@@ -175,7 +179,7 @@ The public homepage introduces Luo heritage with a lakeshore illustration, searc
 
 The public sidebar begins with **Install app**, followed by **Explore**, **Discover**, **Collections**, **Browse the library** and **Saved words and items**. Additional tools depend on your account and permissions.
 
-On a computer, the sidebar toggle collapses or expands the navigation. On a phone, it opens a drawer. Scroll inside the drawer to reach more entries; use X or choose a destination to close it. The header Back control returns to the previous screen. With no previous screen, it opens the public library.
+Collections and More & settings are underlined section headings with their links always expanded. On a computer, the sidebar toggle collapses or expands the whole navigation. On a phone, it opens a drawer. Scroll inside the drawer to reach more entries; use X or choose a destination to close it. The header Back control returns to the previous screen. With no previous screen, it opens the public library.
 
 ### Explore and close controls
 

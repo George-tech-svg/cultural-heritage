@@ -3,11 +3,12 @@
   "viewports": [],
   "interactions": [
     "Explore all options, scrolling, X, Escape, focus return, navigation and header Back",
+    "Discover Feed/Grid toggle, separate transcript reading, museum navigation/exhibits, honest empty live tours, stacked full details and a fresh visit rotation",
     "Portrait and panoramic images and video keep their full frames with black unused space",
     "Guest save offers account registration without attempting a write",
     "Explore preserves usage, meaning, place and overview; related collection buttons open complete details",
     "Full 216-turn reader, complete text download, honest English fallback and dialog dismissal",
-    "Horizontal attachment paging preserves video/audio/document access; sliding or scrolling away pauses playback; details toggle restores overlays",
+    "Horizontal attachment paging preserves video/audio access and leaves documents in full details; sliding or scrolling away pauses playback; details toggle restores overlays",
     "Scrolling loads the next page once without a button click; curiosity links stay outside the feed"
   ],
   "runtimeErrors": [],
@@ -15,5 +16,5 @@
   "liveWrites": 0,
   "apiOrigin": "http://localhost:3000",
   "readingRequests": 1,
-  "completedAt": "2026-11-04T08:37:26.390Z"
+  "completedAt": "2026-11-04T11:56:30.648Z"
 }

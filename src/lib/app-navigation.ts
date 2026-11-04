@@ -11,6 +11,7 @@ export const APP_ROUTES = {
   aiTools: "/ai-tools",
   knowledge: "/knowledge",
   places: "/places",
+  museum: "/museum",
   admin: "/admin/dashboard",
   superAdmin: "/super-admin/dashboard",
   appUpdates: "/mobile-apps",
@@ -29,7 +30,7 @@ export function applicationScreenHref(href: string): string | null {
   if (["/admin/help", "/super-admin/help"].includes(url.pathname)) return "/help";
   if (url.pathname === "/profile") return "/settings";
   if (url.pathname === "/classrooms") return "/courses" + url.search;
-  const screens = ["/welcome", "/explore", "/dashboard", "/learn", "/research", "/courses", "/settings", "/saved", "/workspace", "/account", "/chatbot", "/places", "/knowledge", "/ai-tools", "/tutor", "/help", "/contribute", "/my-submissions"];
+  const screens = ["/museum", "/welcome", "/explore", "/dashboard", "/learn", "/research", "/courses", "/settings", "/saved", "/workspace", "/account", "/chatbot", "/places", "/knowledge", "/ai-tools", "/tutor", "/help", "/contribute", "/my-submissions"];
   return screens.includes(url.pathname) || /^\/contribute\/[a-z0-9_-]+$/.test(url.pathname) ? url.pathname + url.search : null;
 }
 

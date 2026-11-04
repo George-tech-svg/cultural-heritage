@@ -16,6 +16,7 @@ export const AUDIENCE_PATHWAYS = [
 ] as const;
 
 export const MODULE_DIRECTORY = [
+  ["Virtual museum", "/museum"],
   ["Dholuo Dictionary", "/dashboard?module=dictionary"], ["Proverbs Repository", "/dashboard?module=proverbs"],
   ["Oral History Archive", "/dashboard?module=oral_histories"], ["Folktales (Sigana)", "/dashboard?module=folktales"],
   ["Traditional Songs", "/dashboard?module=songs"], ["Riddles (Ngeche)", "/dashboard?module=riddles"],

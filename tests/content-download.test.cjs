@@ -40,7 +40,7 @@ test('the public download endpoint validates input and produces an attachment wi
 });
 test('feed downloads use the API host on bundled clients and do not depend on a text description existing',()=>{
  const React=require('react'),{renderToStaticMarkup}=require('react-dom/server');const Link=({children,...props})=>React.createElement('a',props,children);const {ModuleContentView}=loader()('src/components/shared/module-content-view.tsx');
- const html=renderToStaticMarkup(React.createElement(ModuleContentView,{title:'Artifacts',baseName:'Artifacts',languageName:'Dholuo',languageCode:'luo',languageId:1,moduleCode:'artifacts',items:[{id,title:'Object with no description',summary:null,kind:'cultural',media:[]}],Link,downloadOrigin:'https://backend.example'}));assert.match(html,/Download complete item \(ZIP\)/);assert.ok(html.includes('https://backend.example/api/v1/download?id='+id));
+ const html=renderToStaticMarkup(React.createElement(ModuleContentView,{title:'Artifacts',baseName:'Artifacts',languageName:'Dholuo',languageCode:'luo',languageId:1,moduleCode:'artifacts',items:[{id,title:'Object with no description',summary:null,kind:'cultural',media:[{id:'preview',type:'image',url:'/api/media/preview/file'}]}],Link,downloadOrigin:'https://backend.example'}));assert.match(html,/Download complete item \(ZIP\)/);assert.ok(html.includes('https://backend.example/api/v1/download?id='+id));
 });
 
 test('cancelling a streamed download cancels the active upstream media reader',async()=>{

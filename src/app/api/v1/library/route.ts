@@ -21,6 +21,9 @@ export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q")?.trim();
   const subject = request.nextUrl.searchParams.get("subject") ?? undefined;
   const category = request.nextUrl.searchParams.get("category") ?? undefined;
+  const visit = request.nextUrl.searchParams.get("visit");
+  const presentation = request.nextUrl.searchParams.get("presentation") ?? undefined;
+  if (visit !== null && !/^\d{1,8}$/.test(visit) || presentation !== undefined && !["feed", "reading"].includes(presentation)) return NextResponse.json({ success: false, error: "Invalid discovery preferences." }, { status: 400, headers });
   if ((moduleCode === "subjects" || subject !== undefined) && (moduleCode !== "subjects" || !PRD_SUBJECTS.some(value => value === subject))) return NextResponse.json({ success: false, error: "Choose a valid cultural subject." }, { status: 400, headers });
   if ([records, dictionary].some(value => value && value !== "end" && !/^[A-Za-z0-9_-]{1,128}$/.test(value)) || (query?.length ?? 0) > 200) return NextResponse.json({ success: false, error: "Invalid search or continuation." }, { status: 400, headers });
   if (!/^[a-z]{2,8}(?:-[a-z0-9]+)?$/i.test(languageCode) || !/^[a-z][a-z0-9_]{0,59}$/.test(moduleCode)) {
@@ -30,7 +33,7 @@ export async function GET(request: NextRequest) {
     await assertServiceAvailable();
     const language = await prisma.language.findFirst({ where: { code: languageCode.toLowerCase(), isActive: true }, select: { id: true, code: true, nativeName: true } });
     if (!language) return NextResponse.json({ success: false, error: "Language not available." }, { status: 404, headers });
-    const library = await getPublicLibrary(language, moduleCode, { records, dictionary, query, subject, category });
+    const library = await getPublicLibrary(language, moduleCode, { records, dictionary, query, subject, category, visit: visit === null ? undefined : Number(visit), presentation: presentation as "feed" | "reading" | undefined });
     if (!library) return NextResponse.json({ success: false, error: "Module not available." }, { status: 404, headers });
     return NextResponse.json({ success: true, data: AppLibrarySchema.parse(library) }, { headers });
   } catch {

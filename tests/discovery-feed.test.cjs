@@ -5,7 +5,7 @@ const { renderToStaticMarkup } = require('react-dom/server');
 const { NextRequest } = require('next/server');
 const { loader } = require('./load-ts.cjs');
 const Link = ({ children, ...props }) => React.createElement('a', props, children);
-const item = { id: 'story', title: 'A community story', summary: 'A story shared with the community.', moduleCode: 'oral_histories', moduleName: 'Oral histories', media: [] };
+const item = { id: 'story', title: 'A community story', summary: 'A story shared with the community.', moduleCode: 'oral_histories', moduleName: 'Oral histories', media: [{id:'fixture-image',type:'image',url:'/api/media/fixture-image/file'}] };
 const library = { title: 'Discover heritage', baseName: 'Discover heritage', moduleCode: 'discover', languageCode: 'luo', languageName: 'Dholuo', languageId: 1, canContribute: false, items: [item], categories: [{ code: 'oral_histories', name: 'Oral histories' }, { code: 'riddles', name: 'Riddles' }], limits: { records: 12, dictionaryEntries: 6 }, continuation: { records: 'story', dictionary: null } };
 
 test('discovery includes text records and dictionary entries without requiring a media-library module', async () => {
@@ -84,7 +84,7 @@ test('discovery retains every attached recording beside videos and exposes the n
 function harness() {
   const values = []; const effects = []; const jobs = []; let cursor = 0;
   const load = loader({ react: { ...React,
-    useState(initial) { const i = cursor++; if (!(i in values)) values[i] = initial; return [values[i], next => { values[i] = typeof next === 'function' ? next(values[i]) : next; }]; },
+    useState(initial) { const i = cursor++; if (!(i in values)) values[i] = typeof initial === 'function' ? initial() : initial; return [values[i], next => { values[i] = typeof next === 'function' ? next(values[i]) : next; }]; },
     useRef(initial) { const i = cursor++; return values[i] ??= { current: initial }; },
     useEffect(callback, dependencies) { const i = cursor++; const previous = effects[i]; if (!previous || dependencies.some((value, j) => !Object.is(value, previous.dependencies[j]))) { jobs.push(() => { previous?.cleanup?.(); effects[i] = { dependencies, cleanup: callback() }; }); } },
   } });

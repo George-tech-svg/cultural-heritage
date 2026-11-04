@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Bookmark, BookOpen, Search } from "lucide-react";
+import { ArrowUpRight, Bookmark, BookOpen, Search, LayoutGrid, List } from "lucide-react";
 import type { AppLibrary } from "@/lib/app-contract";
 import type { ContentItem, MediaItem } from "@/lib/app-content";
 import { contributionHref, moduleHref } from "@/lib/app-navigation";
 import { emitActivity } from "@/lib/activity-events";
 import { InterfaceText } from "./interface-language";
-import { LibraryItemDialog, type AppLink } from "./module-content-view";
+import { GridView, LibraryItemDialog, type AppLink } from "./module-content-view";
+import { nextDiscoveryVisit } from "@/lib/discovery-rotation";
 import { SocialFeed, SocialFeedCard } from "./social-feed";
 import { AutoLoadMore } from "./auto-load-more";
 import { BottomMediaControls } from "./bottom-media-controls";
@@ -52,15 +53,28 @@ export function DiscoveryFeed({ initialQuery = "", request, languageCode, langua
   const [saveError, setSaveError] = useState("");
   const [categories, setCategories] = useState<{ code: string; name: string }[]>([]);
   const [filter, setFilter] = useState("all");
+  const [view, setView] = useState("feed");
+  const [visit, setVisit] = useState(() => { let storage; try { storage = window.localStorage; } catch {} return nextDiscoveryVisit(storage); });
+  const reading = filter === "transcript";
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const rotate = () => { let storage; try { storage = window.localStorage; } catch {} setVisit(nextDiscoveryVisit(storage)); };
+    const restore = (event: PageTransitionEvent) => { if (event.persisted) rotate(); };
+    let left = 0;
+    const visibility = () => { if (document.hidden) left = Date.now(); else if (left && Date.now() - left > 300000) rotate(); };
+    window.addEventListener("pageshow", restore); document.addEventListener("visibilitychange", visibility);
+    return () => { window.removeEventListener("pageshow", restore); document.removeEventListener("visibilitychange", visibility); };
+  }, []);
   const epoch = useRef(0);
   const moreController = useRef<AbortController | null>(null);
 
   useEffect(() => {
+    if (visit === undefined) return;
     const generation = ++epoch.current;
     const controller = new AbortController();
     moreController.current?.abort(); moreController.current = null;
     setLoading(true); setMoreBusy(false); setError(""); setLibrary(null); setSelected(null); setJoinItem("");
-    const params = new URLSearchParams({ language: languageCode, module: "discover", category, q: search });
+    const params = new URLSearchParams({ language: languageCode, module: "discover", category, q: search, visit: String(visit), presentation: reading ? "reading" : "feed" });
     void request(`/api/v1/library?${params}`, { signal: controller.signal }).then((value: AppLibrary) => {
       if (generation !== epoch.current) return;
       setLibrary({ ...value, items: mixDiscoveryItems(value.items) });
@@ -68,7 +82,7 @@ export function DiscoveryFeed({ initialQuery = "", request, languageCode, langua
     }).catch(reason => { if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : "The collection could not load. Please try again."); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => { controller.abort(); moreController.current?.abort(); };
-  }, [request, languageCode, category, search, retry]);
+  }, [request, languageCode, category, search, retry, visit, reading]);
 
   // Community changes must not leave another community's category or saved state behind.
   useEffect(() => { setCategory("all"); setQuery(initialQuery); setSearch(initialQuery); setCategories([]); }, [languageCode, initialQuery]);
@@ -79,7 +93,7 @@ export function DiscoveryFeed({ initialQuery = "", request, languageCode, langua
     const generation = epoch.current;
     const controller = new AbortController(); moreController.current = controller;
     setMoreBusy(true); setError("");
-    const params = new URLSearchParams({ language: languageCode, module: "discover", category, q: search, records: library.continuation?.records || "end", dictionary: library.continuation?.dictionary || "end" });
+    const params = new URLSearchParams({ language: languageCode, module: "discover", category, q: search, visit: String(visit), presentation: reading ? "reading" : "feed", records: library.continuation?.records || "end", dictionary: library.continuation?.dictionary || "end" });
     try {
       const next: AppLibrary = await request(`/api/v1/library?${params}`, { signal: controller.signal });
       if (generation === epoch.current && !controller.signal.aborted) setLibrary(current => current && ({ ...next, items: [...current.items, ...mixDiscoveryItems(next.items).filter(item => !current.items.some(existing => existing.id === item.id))] }));
@@ -97,24 +111,27 @@ export function DiscoveryFeed({ initialQuery = "", request, languageCode, langua
   }
 
   const visibleItems = library?.items.filter(item => filter === "all" || (filter === "transcript" ? (item.transcriptCount || 0) > 0 || !!item.bodyText || item.media.length === 0 || item.media.some(asset => ["document", "transcript"].includes(asset.type)) : item.media.some(asset => asset.type === filter))) || [];
+  const mediaForCard = (item: ContentItem) => item.media.filter(asset => ["image", "video", "audio"].includes(asset.type) && (filter === "all" || filter === asset.type));
+  const feedItems = visibleItems.filter(item => mediaForCard(item).length > 0);
+  const open = (item: ContentItem) => { emitActivity({ eventType: "view", recordId: item.id }); setSelected(item); };
   const join = onRegister ? <button type="button" onClick={onRegister} className="discovery-join"><InterfaceText source="Create an account" /><ArrowUpRight size={16} aria-hidden="true" /></button> : <Link href="/register" className="discovery-join"><InterfaceText source="Create an account" /><ArrowUpRight size={16} aria-hidden="true" /></Link>;
   return <section className="discovery-page discovery-social" aria-labelledby="discovery-title">
     <header className="discovery-heading"><div><p className="discovery-eyebrow"><InterfaceText source="LIVING CULTURE" /> <span aria-hidden="true">/</span> {languageName}</p><h1 id="discovery-title"><InterfaceText source="Discover living heritage." /></h1><p><InterfaceText source="Listen, watch and read from the community." /></p></div><Link href="/explore" className="discovery-browse"><InterfaceText source="Browse the library" /><ArrowUpRight size={17} aria-hidden="true" /></Link></header>
     <div className="feed-search-bar discovery-search-bar">
       <form role="search" className="discovery-search" onSubmit={event => { event.preventDefault(); setSearch(query.trim()); if (query.trim()) emitActivity({ eventType: "search", query: query.trim() }); }}><label><span className="sr-only"><InterfaceText source="Search cultural content" /></span><input type="search" placeholder="Find a story, word or tradition" value={query} maxLength={200} onChange={event => setQuery(event.target.value)} /></label><button type="submit" aria-label="Search cultural content"><Search size={18} aria-hidden="true" /></button></form>
-      <ExploreMenu><nav aria-label="Discover content areas">{[{ code: "all", name: "Discover" }, ...categories].map(item => <button key={item.code} type="button" aria-pressed={category === item.code} onClick={() => { setCategory(item.code); setError(""); }}><InterfaceText source={item.name} /></button>)}</nav><nav aria-label="More heritage experiences"><h2><InterfaceText source="Follow your curiosity" /></h2>{[["/explore", "All collections"], ["/learn", "Learn the language"], ["/places", "Explore cultural places"], ["/contribute", "Share your heritage"]].map(([href, label]) => <Link key={href} href={href}><NavigationIcon href={href} size={18} /><InterfaceText source={label} /></Link>)}</nav></ExploreMenu>
+      <ExploreMenu><nav aria-label="Discover content areas">{[{ code: "all", name: "Discover" }, ...categories].map(item => <button key={item.code} type="button" aria-pressed={category === item.code} onClick={() => { setCategory(item.code); setError(""); }}><InterfaceText source={item.name} /></button>)}</nav><nav aria-label="More heritage experiences"><h2><InterfaceText source="Follow your curiosity" /></h2>{[["/museum", "Virtual museum"], ["/explore", "All collections"], ["/learn", "Learn the language"], ["/places", "Explore cultural places"], ["/contribute", "Share your heritage"]].map(([href, label]) => <Link key={href} href={href}><NavigationIcon href={href} size={18} /><InterfaceText source={label} /></Link>)}</nav></ExploreMenu>
       <Link href={category === "all" ? "/contribute" : contributionHref(category)} className="feed-contribute"><InterfaceText source="Contribute" /></Link>
     </div>
-    <BottomMediaControls className="media-dock-five"><FeedMediaFilters value={filter} onChange={setFilter} /></BottomMediaControls>
-    <div className="discovery-layout"><SocialFeed className="discovery-stream">
+    <BottomMediaControls><FeedMediaFilters value={filter} onChange={value => { setFilter(value); if (value === "transcript") setView("grid"); }} /><button type="button" className="media-filter-button" aria-label={`${view === "feed" ? "Grid" : "Feed"} view`} onClick={() => { if (view === "grid" && reading) setFilter("all"); setView(view === "feed" ? "grid" : "feed"); }}>{view === "feed" ? <LayoutGrid size={20} aria-hidden="true" /> : <List size={20} aria-hidden="true" />}<span><InterfaceText source={view === "feed" ? "Grid" : "Feed"} /></span></button></BottomMediaControls>
+    <div className={`discovery-layout ${view === "grid" || reading ? "discovery-grid-layout" : ""}`}><div className="discovery-status">
       {error && <div role="alert" className="discovery-message"><p>{error}</p><button type="button" onClick={() => library ? void loadMore() : setRetry(value => value + 1)}><InterfaceText source="Try again" /></button></div>}
       {saveError && <p role="alert" className="discovery-message">{saveError}</p>}
       {loading && <div role="status" aria-label="Loading cultural content" className="discovery-loading"><div className="discovery-placeholder" /><p><InterfaceText source="Bringing the collection to you..." /></p></div>}
       {!loading && library?.items.length === 0 && <div className="discovery-message"><BookOpen size={28} aria-hidden="true" /><h2><InterfaceText source="There is more to discover." /></h2><p><InterfaceText source="No published items match this selection yet. Try another content area or clear your search." /></p><button type="button" onClick={() => { setCategory("all"); setQuery(""); setSearch(""); }}><InterfaceText source="Show all heritage" /></button><Link href="/explore" className="discovery-browse"><InterfaceText source="Browse the library" /></Link></div>}
       {!loading && library && visibleItems.length === 0 && library.items.length > 0 && <p role="status" className="feed-end-note"><InterfaceText source="No matching entries" /></p>}
-      {visibleItems.map(item => <DiscoveryCard key={item.id} media={filter === "all" ? item.media : item.media.filter(asset => filter === "transcript" ? ["document", "transcript"].includes(asset.type) : asset.type === filter)} item={item} downloadOrigin={downloadOrigin} saved={saved.includes(item.id)} saveBusy={saveBusy === item.id} Link={Link} onOpen={() => { emitActivity({ eventType: "view", recordId: item.id }); setSelected(item); }} onSave={() => void save(item)} joinPrompt={joinItem === item.id ? <div className="discovery-save-prompt"><p><InterfaceText source="Keep your favourites with a free account." /></p>{join}</div> : undefined} />)}
+      </div>{view === "grid" || reading ? <div className="discovery-grid"><h2 className="sr-only"><InterfaceText source={reading ? "Reading room" : "Discover"} /></h2><GridView items={visibleItems} mediaForCard={item => item.media} onOpen={open} viewLanguageCode={languageCode} /></div> : <SocialFeed className="discovery-stream">{feedItems.map(item => <DiscoveryCard key={item.id} media={mediaForCard(item)} item={item} downloadOrigin={downloadOrigin} saved={saved.includes(item.id)} saveBusy={saveBusy === item.id} Link={Link} onOpen={() => open(item)} onSave={() => void save(item)} joinPrompt={joinItem === item.id ? <div className="discovery-save-prompt"><p><InterfaceText source="Keep your favourites with a free account." /></p>{join}</div> : undefined} />)}</SocialFeed>}
       {(library?.continuation?.records || library?.continuation?.dictionary) ? <AutoLoadMore onLoad={loadMore} busy={loading || moreBusy} error={!!error} /> : library && !loading && <p className="feed-end-note"><InterfaceText source="You have reached the end of this collection." /></p>}
-    </SocialFeed></div>
+    </div>
     {selected && <LibraryItemDialog key={`${languageCode}:${selected.id}`} item={selected} items={library?.items} onRelated={setSelected} languageCode={languageCode} viewLanguageCode={languageCode} downloadOrigin={downloadOrigin} onClose={() => setSelected(null)} onSave={signedIn ? item => void save(item) : undefined} />}
   </section>;
 }

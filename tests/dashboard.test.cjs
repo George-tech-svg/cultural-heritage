@@ -64,10 +64,10 @@ test('audio-visual library includes eligible media across modules without relaxi
   assert.equal(element.props.canContribute, false);
 });
 
-test('the entry opens the public heritage homepage with search and optional sign-in', () => {
+test('the entry opens the public heritage homepage with search and optional sign-in', async () => {
   const { renderToStaticMarkup } = require('react-dom/server');
-  const load = loader();
-  const html = renderToStaticMarkup(React.createElement(load('src/app/page.tsx').default));
+  const load = loader({ '@/lib/auth': { auth: async () => null } });
+  const html = renderToStaticMarkup(await load('src/app/page.tsx').default());
   assert.match(html, /Our words\./);
   assert.match(html, /Search the heritage collection/);
   assert.match(html, /href="\/login"/);

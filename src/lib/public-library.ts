@@ -6,11 +6,14 @@ import { getPublicModules } from "@/lib/public-navigation";
 import type { ContentItem } from "@/lib/app-content";
 import { PRD_SUBJECTS } from "@/lib/prd-content-catalog";
 
+import { readLibraryPage } from "@/lib/discovery-rotation";
+import type { Prisma } from "@prisma/client";
+
 const recordText = publicCulturalText;
 
 // Shared public projection: never serialize contributor identities, consent
 // documents or internal repository metadata from raw Prisma records.
-export async function getPublicLibrary(language: { id: number; code: string; nativeName: string }, moduleCode: string, page: { records?: string; dictionary?: string; query?: string; subject?: string; category?: string } = {}) {
+export async function getPublicLibrary(language: { id: number; code: string; nativeName: string }, moduleCode: string, page: { records?: string; dictionary?: string; query?: string; subject?: string; category?: string; visit?: number; presentation?: "feed" | "reading" } = {}) {
   if (moduleCode === "subjects" && !PRD_SUBJECTS.some(value => value === page.subject)) return null;
   const modules = await getPublicModules(language.id);
   const isDiscovery = moduleCode === "discover";
@@ -24,25 +27,30 @@ export async function getPublicLibrary(language: { id: number; code: string; nat
   const dictionaryLimit = isDiscovery ? 6 : 100;
   const englishLanguage = language.code === "eng" ? { id: language.id } : await prisma.language.findUnique({ where: { code: "eng" }, select: { id: true } });
   const media = { where: publicMediaWhere(), select: { id: true, type: true, url: true, thumbnailUrl: true, format: true } };
-  const [records, entries] = await Promise.all([
-    page.records === "end" ? Promise.resolve([]) : prisma.culturalRecord.findMany({
-      where: { ...(isDiscovery ? { moduleId: category ? category.id : { in: modules.filter(item => !["chatbot", "audio_visual"].includes(item.code)).map(item => item.id) } } : isSubjectLibrary ? { moduleId: { in: modules.filter(item => item.code !== "chatbot").map(item => item.id) }, data: { path: ["subject_area"], equals: page.subject } } : isMediaLibrary ? { media: { some: publicMediaWhere() }, ...(category ? { moduleId: category.id } : {}) } : { moduleId: mod.id }), ...(language.code === "eng" ? {} : { languageId: language.id }), ...publicRecordWhere(), ...(page.query ? { OR: [{ title: { contains: page.query, mode: "insensitive" as const } }, { translations: { some: { languageId: englishLanguage?.id ?? language.id, title: { contains: page.query, mode: "insensitive" as const } } } }] } : {}) },
-      ...(page.records ? { cursor: { id: page.records }, skip: 1 } : {}),
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: recordLimit,
+  const feedMedia = { media: { some: { ...publicMediaWhere(), type: { in: ["image", "video", "audio"] } } } };
+  const recordBase: Prisma.CulturalRecordWhereInput = { ...(isDiscovery ? { moduleId: category ? category.id : { in: modules.filter(item => !["chatbot", "audio_visual"].includes(item.code)).map(item => item.id) } } : isSubjectLibrary ? { moduleId: { in: modules.filter(item => item.code !== "chatbot").map(item => item.id) }, data: { path: ["subject_area"], equals: page.subject } } : isMediaLibrary ? { media: { some: publicMediaWhere() }, ...(category ? { moduleId: category.id } : {}) } : { moduleId: mod.id }), ...(language.code === "eng" ? {} : { languageId: language.id }), ...publicRecordWhere(), ...(page.query ? { OR: [{ title: { contains: page.query, mode: "insensitive" as const } }, { translations: { some: { languageId: englishLanguage?.id ?? language.id, title: { contains: page.query, mode: "insensitive" as const } } } }] } : {}) };
+  const recordWhere: Prisma.CulturalRecordWhereInput = page.presentation === "feed" ? { AND: [recordBase, feedMedia] } : recordBase;
+  const dictionaryBase: Prisma.DictionaryEntryWhereInput = { ...(language.code === "eng" ? {} : { languageId: language.id }), ...publicRecordWhere(), ...(page.query ? { OR: ["dholuo", "english", "kiswahili"].map(field => ({ [field]: { contains: page.query, mode: "insensitive" as const } })) } : {}) };
+  const dictionaryWhere: Prisma.DictionaryEntryWhereInput = page.presentation === "feed" ? { AND: [dictionaryBase, feedMedia] } : dictionaryBase;
+  const rotation = isDiscovery && !page.query ? page.visit : undefined;
+  const [recordPage, entryPage] = await Promise.all([
+    readLibraryPage({ cursor: page.records, rotation, limit: recordLimit, count: () => prisma.culturalRecord.count({ where: recordWhere }), read: paging => prisma.culturalRecord.findMany({
+      where: recordWhere,
+      ...paging, orderBy: rotation === undefined ? [{ createdAt: "desc" }, { id: "desc" }] : [{ id: "asc" }],
       select: {
         id: true, title: true, summary: true, data: true, languageId: true, createdAt: true, isProvisional: true,
         module: { select: { code: true, baseName: true } }, media,
         _count: { select: { transcripts: { where: publicGovernanceWhere() } } },
         translations: { where: { languageId: { in: Array.from(new Set([language.id, ...(englishLanguage ? [englishLanguage.id] : [])])) } }, select: { languageId: true, title: true, summary: true, data: true } },
       },
-    }),
-    (mod.code === "dictionary" || isDiscovery && (!category || category.code === "dictionary") && modules.some(item => item.code === "dictionary") || isSubjectLibrary && page.subject === "Dholuo dictionary" && modules.some(item => item.code === "dictionary")) && page.dictionary !== "end" ? prisma.dictionaryEntry.findMany({
-      where: { ...(language.code === "eng" ? {} : { languageId: language.id }), ...publicRecordWhere(), ...(page.query ? { OR: ["dholuo", "english", "kiswahili"].map(field => ({ [field]: { contains: page.query, mode: "insensitive" as const } })) } : {}) },
-      ...(page.dictionary ? { cursor: { id: page.dictionary }, skip: 1 } : {}),
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: dictionaryLimit,
+    }) }),
+    (mod.code === "dictionary" || isDiscovery && (!category || category.code === "dictionary") && modules.some(item => item.code === "dictionary") || isSubjectLibrary && page.subject === "Dholuo dictionary" && modules.some(item => item.code === "dictionary")) ? readLibraryPage({ cursor: page.dictionary, rotation, limit: dictionaryLimit, count: () => prisma.dictionaryEntry.count({ where: dictionaryWhere }), read: paging => prisma.dictionaryEntry.findMany({
+      where: dictionaryWhere,
+      ...paging, orderBy: rotation === undefined ? [{ createdAt: "desc" }, { id: "desc" }] : [{ id: "asc" }],
       select: { id: true, dholuo: true, english: true, kiswahili: true, pronunciation: true, grammarClass: true, wordOrigin: true, synonyms: true, antonyms: true, examples: true, createdAt: true, media },
-    }) : Promise.resolve([]),
+    }) }) : Promise.resolve({ items: [], continuation: null }),
   ]);
+  const records = recordPage.items, entries = entryPage.items;
   function summary(record: typeof records[number], id: number): string {
     if (record.languageId === id) return record.summary || recordText(record.data);
     const translation = record.translations.find(item => item.languageId === id);
@@ -72,7 +80,8 @@ export async function getPublicLibrary(language: { id: number; code: string; nat
       moduleCode: "dictionary", moduleName: "Dictionary", createdAt: entry.createdAt.toISOString(),
       media: entry.media.map(asset => ({ id: asset.id, type: asset.type, url: `/api/media/${asset.id}/file`, thumbnailUrl: mediaThumbnail(asset.id, asset.type), format: asset.format })),
     })),
-  ].sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+  ];
+  if (rotation === undefined) items.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
   return {
     title: mod.baseName, baseName: mod.baseName,
     languageName: language.nativeName, languageCode: language.code, languageId: language.id,
@@ -81,6 +90,6 @@ export async function getPublicLibrary(language: { id: number; code: string; nat
     ...(isSubjectLibrary ? { subject: page.subject } : {}),
     canContribute: !isMediaLibrary && !isDiscovery && mod._count.fieldDefinitions > 0,
     items, limits: { records: recordLimit, dictionaryEntries: dictionaryLimit },
-    continuation: { records: records.length === recordLimit ? records[records.length - 1].id : null, dictionary: entries.length === dictionaryLimit ? entries[entries.length - 1].id : null },
+    continuation: { records: recordPage.continuation, dictionary: entryPage.continuation },
   };
 }

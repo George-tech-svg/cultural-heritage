@@ -44,8 +44,8 @@ test('ordinary super admins are not shown master-only backup navigation',()=>{
   assert.match(standard,/href="\/super-admin\/help"/);assert.doesNotMatch(standard,/href="\/super-admin\/backup"/);
   const master=renderToStaticMarkup(React.createElement(AdminSidebar,{isSuperAdmin:false,isMasterSuperAdmin:true,roles:[]}));assert.match(master,/href="\/super-admin\/backup"/);
 });
-test('NRF logo uploads are rejected before any upload or settings mutation',async()=>{
-  const {POST}=loader({'@/lib/auth':{auth:async()=>({user:{id:'master',isMasterSuperAdmin:true}})},'@/lib/cloudinary':{uploadToCloudinary:()=>assert.fail('NRF upload must not run')},'@/lib/settings':{},'@/lib/audit':{}})('src/app/api/super-admin/branding/route.ts');
+test('partner logo uploads reject invalid image bytes before any upload or settings mutation',async()=>{
+  const {POST}=loader({'@/lib/auth':{auth:async()=>({user:{id:'master',isMasterSuperAdmin:true}})},'@/lib/cloudinary':{uploadToCloudinary:()=>assert.fail('Invalid image bytes must not be uploaded')},'@/lib/settings':{},'@/lib/audit':{}})('src/app/api/super-admin/branding/route.ts');
   const form=new FormData();form.set('partner','nrf');form.set('file',new File(['fixture'],'nrf.png',{type:'image/png'}));
   assert.equal((await POST(new Request('https://app.test/api/super-admin/branding',{method:'POST',body:form}))).status,400);
 });

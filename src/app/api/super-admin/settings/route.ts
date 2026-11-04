@@ -1,3 +1,4 @@
+import { MuseumToursSchema } from "@/lib/museum-tours";
 import { NextRequest, NextResponse } from "next/server";
 import { EDITABLE_SETTINGS, isSecretSetting, maskSettings } from "@/lib/settings-policy";
 import { auth } from "@/lib/auth";
@@ -53,6 +54,10 @@ export async function PATCH(req: NextRequest) {
       value.includes("•")
     ) {
       continue;
+    }
+    if (key === "virtual_museum_tours") {
+      try { MuseumToursSchema.parse(JSON.parse(value)); }
+      catch { return NextResponse.json({ error: "Give every tour a title and a valid HTTPS link (up to 24 tours)." }, { status: 400 }); }
     }
     updates[key] = value;
   }

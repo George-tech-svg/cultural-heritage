@@ -1,0 +1,37 @@
+{
+  "mobilePreview": true,
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 1000,
+      "museumFits": true,
+      "stackedExhibitDetails": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "museumFits": true,
+      "stackedExhibitDetails": true
+    },
+    {
+      "width": 320,
+      "height": 700,
+      "museumFits": true,
+      "stackedExhibitDetails": true
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "museumFits": true,
+      "stackedExhibitDetails": true
+    }
+  ],
+  "interactions": [
+    "Museum gallery and stacked complete exhibit details fit desktop, portrait phones and landscape; live tours remain honestly unconfigured"
+  ],
+  "runtimeErrors": [],
+  "unexpectedApis": [],
+  "liveWrites": 0,
+  "apiOrigin": "http://localhost:3000",
+  "completedAt": "2026-11-04T12:06:15.356Z"
+}

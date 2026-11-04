@@ -11,7 +11,7 @@ test('all PRD audiences and modules have destinations supported by the shared cl
   const { AUDIENCE_PATHWAYS, MODULE_DIRECTORY } = load('src/lib/audience-pathways.ts');
   const { applicationScreenHref } = load('src/lib/app-navigation.ts');
   assert.deepEqual(AUDIENCE_PATHWAYS.map(item => item.label), ['Children', 'Youth', 'Adults', 'Schools', 'Universities', 'Researchers', 'Cultural institutions', 'Museums', 'Tourists', 'Diaspora communities', 'Linguists', 'AI researchers', 'Government cultural agencies']);
-  assert.equal(MODULE_DIRECTORY.length, 15);
+  assert.equal(MODULE_DIRECTORY.length, 16);
   for (const [label, href] of [...MODULE_DIRECTORY, ...AUDIENCE_PATHWAYS.flatMap(item => item.links)]) assert.ok(applicationScreenHref(href), `${label}: ${href}`);
   const { ExplorePathways } = load('src/components/shared/explore-pathways.tsx');
   const html = renderToStaticMarkup(React.createElement(ExplorePathways, { Link, request: async () => {}, languageCode: 'luo' }));
@@ -23,7 +23,7 @@ test('sidebar groups secondary tools and collection links without duplicate dest
   const { AppSidebarView } = loader()('src/components/shared/app-sidebar-view.tsx');
   const modules = ['dictionary', 'research', 'chatbot', 'ai_tutor', 'games', 'learning', 'cultural_calendar'].map(code => ({ code, title: code, baseName: code }));
   const html = renderToStaticMarkup(React.createElement(AppSidebarView, { modules, pathname: '/dashboard', activeModule: 'dictionary', Link }));
-  assert.match(html, /<details[^>]*open=""[^>]*><summary[^>]*>Collections/);
+  assert.match(html, /sidebar-section-heading[^>]*underline/); assert.ok(html.includes(">Collections</h2>")); assert.doesNotMatch(html, /<details|<summary/);
   assert.match(html, /More &amp; settings/);
   const links = [...html.matchAll(/href="([^"]+)"/g)].map(match => match[1]);
   assert.equal(new Set(links).size, links.length);
